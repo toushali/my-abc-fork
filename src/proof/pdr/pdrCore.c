@@ -1519,7 +1519,8 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     fResume  = ( fSlicing && Vec_PtrSize(p->vSolvers) > 0 );
     if ( !fResume )
     {
-        p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
+        if ( p->timeToStop == 0 )   // PURSE scheduler presets one global deadline
+            p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
         assert( Vec_PtrSize(p->vSolvers) == 0 );
         // in the multi-output mode, mark trivial POs (those fed by const0) as solved 
         if ( p->pPars->fSolveAll )
@@ -1968,13 +1969,44 @@ int Pdr_ManSolve( Aig_Man_t * pAig, Pdr_Par_t * pPars )
         Gia_ManToBridgeAbort( stdout, 7, (unsigned char *)"timeout" );
     return RetValue;
 }
+
+#define PURSE_ST_ACTIVE  2    // still scheduled (1 = SAFE, 0 = UNSAFE, -1 = undecided)
+
+typedef struct Purse_Ctx_t_ Purse_Ctx_t;
+struct Purse_Ctx_t_
+{
+    int          iPo;          // property = primary output index
+    Aig_Man_t *  pAig;         // private copy of the AIG
+    Pdr_Par_t    Pars;         // private copy of the parameters
+    Pdr_Man_t *  pMan;         // persistent PDR manager (NULL once finished)
+    int          Status;       // PURSE_ST_ACTIVE, 1, 0 or -1
+    int          nSlices;      // slices run so far
+    int          nFrames;      // last opened frame
+    abctime      timeUsed;     // total solving time of this property
+    long long    nCalls, nConf, nProp;   // totals after the previous slice
+    Abc_Cex_t *  pCex;         // counterexample (UNSAFE only)
+    Vec_Str_t *  vHist;        // one char per round: P S U ? -
+};
+
+/*Toushali Banerjee
+24th October 2026
+pdr_ManPurseSlicePrint*/
+static void Pdr_ManPurseSlicePrint( Pdr_Man_t * p, int iSlice, int RetValue, int nCallsBefore, abctime clk )
+{
+    const char * pRes = RetValue == 1 ? "SAFE" : RetValue == 0 ? "UNSAFE" :
+                        RetValue == PURSE_PAUSED ? "PAUSED" : "UNKNOWN";
+    long long nConfTotal, nPropTotal;
+    Pdr_ManSatWork( p, &nConfTotal, &nPropTotal );
+    Abc_Print( 1, "c [PURSE-SLICE] slice=%d result=%s frame=%d sat_calls_total=%d sat_calls_slice=%d "
+                  "conf_total=%lld conf_slice=%lld prop_total=%lld prop_slice=%lld mgr=%p time=%.6f\n",
+        iSlice, pRes, Vec_PtrSize(p->vSolvers) - 1, p->nCalls, p->nCalls - nCallsBefore,
+        nConfTotal, nConfTotal - p->nConfStart,
+        nPropTotal, nPropTotal - p->nPropStart,
+        (void *)p, 1.0 * clk / CLOCKS_PER_SEC );
+}
 /*Creator: Toushali Banerjee
 Date: 16th Oct, 2026
 Purse_ManPurse*/
-/**Function*************************************************************
-  Synopsis    [PURSE: prints the per-goal footprint of one PDR run.]
-  Description [Prints GOAL_ID, |PO|, |phi|, TL, AL, TC, |F|, T.]
-***********************************************************************/
 void Pdr_ManPursePrintFootprint( Pdr_Man_t * p, int iGoal, int RetValue, abctime Time )
 {
     Vec_Ptr_t * vArray;
@@ -2003,21 +2035,168 @@ void Pdr_ManPursePrintFootprint( Pdr_Man_t * p, int iGoal, int RetValue, abctime
         nConfTotal, nPropTotal,
         1.0 * Time / CLOCKS_PER_SEC );
 }
-/*Toushali Banerjee
-24th October 2026
-pdr_ManPurseSlicePrint*/
-static void Pdr_ManPurseSlicePrint( Pdr_Man_t * p, int iSlice, int RetValue, int nCallsBefore, abctime clk )
+
+static void Pdr_ManPurseSchedPrint( Purse_Ctx_t * c, int iRound, int Res, abctime clk )
 {
-    const char * pRes = RetValue == 1 ? "SAFE" : RetValue == 0 ? "UNSAFE" :
-                        RetValue == PURSE_PAUSED ? "PAUSED" : "UNKNOWN";
-    long long nConfTotal, nPropTotal;
-    Pdr_ManSatWork( p, &nConfTotal, &nPropTotal );
-    Abc_Print( 1, "c [PURSE-SLICE] slice=%d result=%s frame=%d sat_calls_total=%d sat_calls_slice=%d "
-                  "conf_total=%lld conf_slice=%lld prop_total=%lld prop_slice=%lld mgr=%p time=%.6f\n",
-        iSlice, pRes, Vec_PtrSize(p->vSolvers) - 1, p->nCalls, p->nCalls - nCallsBefore,
-        nConfTotal, nConfTotal - p->nConfStart,
-        nPropTotal, nPropTotal - p->nPropStart,
-        (void *)p, 1.0 * clk / CLOCKS_PER_SEC );
+    Pdr_Man_t * p = c->pMan;
+    const char * pRes = Res == 1 ? "SAFE" : Res == 0 ? "UNSAFE" :
+                        Res == PURSE_PAUSED ? "PAUSED" : "UNKNOWN";
+    long long nConf, nProp, nCalls = (long long)p->nCalls, ovConf = 0, ovProp = 0;
+    Pdr_ManSatWork( p, &nConf, &nProp );
+    if ( Res == PURSE_PAUSED )   // overshoot of the soft budget; negative = another limit paused it
+    {
+        if ( c->Pars.nConfBudget > 0 ) ovConf = (nConf - p->nConfStart) - c->Pars.nConfBudget;
+        if ( c->Pars.nPropBudget > 0 ) ovProp = (nProp - p->nPropStart) - c->Pars.nPropBudget;
+    }
+    Abc_Print( 1, "c [PURSE-SCHED] round=%d po=%d result=%s frame=%d "
+                  "sat_calls_total=%lld sat_calls_incr=%lld conf_total=%lld conf_incr=%lld "
+                  "prop_total=%lld prop_incr=%lld over_conf=%lld over_prop=%lld mgr=%p time=%.6f\n",
+        iRound, c->iPo, pRes, Vec_PtrSize(p->vSolvers) - 1,
+        nCalls, nCalls - c->nCalls, nConf, nConf - c->nConf, nProp, nProp - c->nProp,
+        ovConf, ovProp, (void *)p, 1.0 * clk / CLOCKS_PER_SEC );
+    c->nCalls = nCalls;  c->nConf = nConf;  c->nProp = nProp;
+    c->nFrames = Vec_PtrSize(p->vSolvers) - 1;
+}
+
+static Purse_Ctx_t * Purse_CtxStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, int iPo, abctime timeToStop )
+{
+    Purse_Ctx_t * c = ABC_CALLOC( Purse_Ctx_t, 1 );
+    c->iPo   = iPo;
+    c->pAig  = Aig_ManDupSimple( pAig );
+    assert( Saig_ManRegNum(c->pAig) == Saig_ManRegNum(pAig) );
+    assert( Saig_ManPiNum(c->pAig)  == Saig_ManPiNum(pAig)  );
+    assert( Saig_ManPoNum(c->pAig)  == Saig_ManPoNum(pAig)  );
+    c->Pars            = *pPars;      // private parameter copy
+    c->Pars.iOutput    = iPo;
+    c->Pars.fSolveAll  = 0;           // single-output mode: first cex ends the run
+    c->Pars.vOutMap    = NULL;
+    c->Pars.fUseBridge = 0;
+    c->pMan            = Pdr_ManStart( c->pAig, &c->Pars, NULL );
+    c->pMan->timeToStop = timeToStop; // global deadline (see Step 4)
+    c->Status          = PURSE_ST_ACTIVE;
+    c->vHist           = Vec_StrAlloc( 16 );
+    return c;
+}
+static int Purse_CtxRunSlice( Purse_Ctx_t * c, int iRound )
+{
+    abctime clk = Abc_Clock();
+    int Res;
+    assert( c->Status == PURSE_ST_ACTIVE && c->pMan != NULL );   // a solved property is never scheduled again
+    Res = Pdr_ManSolveInt( c->pMan );
+    clk = Abc_Clock() - clk;
+    c->timeUsed += clk;
+    c->nSlices++;
+    Pdr_ManPurseSchedPrint( c, iRound, Res, clk );
+    return Res;
+}
+
+// Res = 1, 0, -1 or PURSE_PAUSED (a property still open when the scheduler stops)
+static void Purse_CtxFinish( Purse_Ctx_t * c, int Res )
+{
+    Pdr_ManPursePrintFootprint( c->pMan, c->iPo, Res, c->timeUsed );   // c [PURSE] line
+    if ( Res == 0 )
+    {
+        c->pCex = c->pAig->pSeqModel;   // take the counterexample out of the private AIG
+        c->pAig->pSeqModel = NULL;
+        if ( c->pCex ) c->pCex->iPo = c->iPo;
+    }
+    c->Status = (Res == 1 || Res == 0) ? Res : -1;
+    Pdr_ManStop( c->pMan );
+    c->pMan = NULL;
+    Aig_ManStop( c->pAig );
+    c->pAig = NULL;
+}
+int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
+{
+    int nPos     = Saig_ManPoNum( pAig );
+    int nRounds  = pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY;
+    abctime clk0 = Abc_Clock();
+    abctime timeToStop = pPars->nTimeOut ? pPars->nTimeOut * CLOCKS_PER_SEC + clk0 : 0;
+    Purse_Ctx_t ** pCtx = ABC_CALLOC( Purse_Ctx_t *, nPos );
+    int * pOrder = ABC_ALLOC( int, nPos );          // fixed order now; PURSE ordering later swaps this array
+    int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0;
+
+    ABC_FREE( pAig->pSeqModel );
+    for ( i = 0; i < nPos; i++ )
+        pOrder[i] = i;
+    for ( i = 0; i < nPos; i++ )
+        pCtx[i] = Purse_CtxStart( pAig, pPars, i, timeToStop );
+
+    for ( iRound = 1; iRound <= nRounds && !fTimeOut; iRound++ )
+    {
+        nActive = 0;
+        nRun++;
+        for ( k = 0; k < nPos; k++ )
+        {
+            Purse_Ctx_t * c = pCtx[ pOrder[k] ];
+            int Res;
+            if ( c->Status != PURSE_ST_ACTIVE )
+            {
+                Vec_StrPush( c->vHist, '-' );        // solved earlier: skipped
+                continue;
+            }
+            if ( timeToStop && Abc_Clock() > timeToStop )
+            {
+                fTimeOut = 1;
+                Vec_StrPush( c->vHist, '?' );        // not reached before the deadline
+                continue;
+            }
+            Res = Purse_CtxRunSlice( c, iRound );
+            if ( Res == PURSE_PAUSED )
+            {
+                Vec_StrPush( c->vHist, 'P' );
+                nActive++;
+            }
+            else if ( Res == 1 || Res == 0 )
+            {
+                Vec_StrPush( c->vHist, Res ? 'S' : 'U' );
+                Purse_CtxFinish( c, Res );
+            }
+            else   // -1: the global deadline, or a per-property stop such as -F
+            {
+                Vec_StrPush( c->vHist, '?' );
+                if ( timeToStop && Abc_Clock() > timeToStop )
+                    fTimeOut = 1;                    // stays ACTIVE, reported undecided below
+                else
+                    Purse_CtxFinish( c, -1 );        // dropped, never scheduled again
+            }
+        }
+        if ( nActive == 0 && !fTimeOut )
+            break;                                   // every property is solved or dropped
+    }
+
+    // report: still-open properties are undecided
+    for ( i = 0; i < nPos; i++ )
+    {
+        Purse_Ctx_t * c = pCtx[i];
+        if ( c->Status == PURSE_ST_ACTIVE )
+            Purse_CtxFinish( c, PURSE_PAUSED );      // prints result=PAUSED, sets Status = -1
+        while ( Vec_StrSize(c->vHist) < nRun )
+            Vec_StrPush( c->vHist, '-' );
+        Abc_Print( 1, "c [PURSE-SUMMARY] po=%d final=%s slices=%d frames=%d sat_calls=%lld conflicts=%lld propagations=%lld time=%.6f rounds=",
+            c->iPo, c->Status == 1 ? "SAFE" : c->Status == 0 ? "UNSAFE" : "UNDECIDED",
+            c->nSlices, c->nFrames, c->nCalls, c->nConf, c->nProp, 1.0 * c->timeUsed / CLOCKS_PER_SEC );
+        for ( k = 0; k < Vec_StrSize(c->vHist); k++ )
+            Abc_Print( 1, "%c", Vec_StrEntry(c->vHist, k) );
+        Abc_Print( 1, "\n" );
+        if ( c->Status == 1 )       nProved++;
+        else if ( c->Status == 0 )  nFailed++;
+        else                        nUndec++;
+    }
+    Abc_Print( 1, "Properties:  All = %d. Proved = %d. Disproved = %d. Undecided = %d.   Time = %8.2f sec\n",
+        nPos, nProved, nFailed, nUndec, 1.0 * (Abc_Clock() - clk0) / CLOCKS_PER_SEC );
+
+    pPars->iFrame = 0;
+    // Phase A: only report. Phase B (Step 7) hands the per-property results to the frame.
+    for ( i = 0; i < nPos; i++ )
+    {
+        if ( pCtx[i]->pCex ) Abc_CexFree( pCtx[i]->pCex );
+        Vec_StrFree( pCtx[i]->vHist );
+        ABC_FREE( pCtx[i] );
+    }
+    ABC_FREE( pCtx );
+    ABC_FREE( pOrder );
+    return nProved == nPos ? 1 : -1;
 }
 int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 {
@@ -2048,6 +2227,8 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     // PURSE: slicing is on if any of -S, -B, -P is given
     fSlicing = pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0;
     // -R = max number of slices; without -R, slice until a verdict or -T
+    if ( pPars->iOutput < 0 && fSlicing )
+       return Pdr_ManPurseSched( pAig, pPars );
     nSlices  = fSlicing ? (pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY) : 1;
     for ( iSlice = 1; iSlice <= nSlices; iSlice++ )
     {

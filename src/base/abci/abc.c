@@ -33856,11 +33856,11 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         Abc_Print( -1, "Switch -R requires at least one of -S, -B, -P.\n" );
         return 1;
     }
-    if ( (pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0) && pPars->iOutput < 0 )
+    /*if ( (pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0) && pPars->iOutput < 0 )
     {
         Abc_Print( -1, "Switches -S, -B, -P require a single output (-O num).\n" );
         return 1;
-    }
+    }*/
     if ( pPars->iOutput < 0 && pAbc->fBatchMode && (pAbc->Status == 0 || pAbc->Status == 1) ) 
     { 
         Abc_Print( 1, "The miters is already solved; skipping the command.\n" ); 
