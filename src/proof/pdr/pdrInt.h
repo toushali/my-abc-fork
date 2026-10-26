@@ -152,6 +152,8 @@ struct Pdr_Man_t_
     int         nObligs;   // the number of proof obligations derived
     int         nCubes;    // the number of cubes derived
     int         nCalls;    // the number of SAT calls
+    long long nConfStart;   // Toushali PURSE: total SAT conflicts at start of the current slice
+    long long nPropStart;   // Toushali PURSE: total SAT propagations at start of the current slice
     int         nCallsS;   // the number of SAT calls (sat)
     int         nCallsU;   // the number of SAT calls (unsat)
     int         nStarts;   // the number of SAT solver restarts

@@ -49,6 +49,8 @@ struct Pdr_Par_t_
     int nConfGenLimit;    // limit on SAT solver conflicts during generalization
     long long nConfBudget;   // Toushali PURSE: total conflict budget for the run (0 = no limit)
     long long nPropBudget;   // Toushali PURSE: total propagation budget for the run (0 = no limit)
+    long long nConfStart;   // Toushali: total SAT conflicts at start of the current slice
+    long long nPropStart;   // Toushali: total SAT propagations at start of the current slice
     int nRestLimit;       // limit on the number of proof-obligations
     int nTimeOut;         // timeout in seconds
     int nTimeOutGap;      // approximate timeout in seconds since the last change

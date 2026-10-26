@@ -33732,7 +33732,7 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'R':
             if ( globalUtilOptind >= argc )
             {
-                Abc_Print( -1, "Command line switch \"-S\" should be followed by an integer.\n" );
+                Abc_Print( -1, "Command line switch \"-R\" should be followed by an integer.\n" );
                 goto usage;
             }
             pPars->nMaxSlices = atoi(argv[globalUtilOptind]);
@@ -33851,14 +33851,14 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         Abc_Print( -1, "Output %d is out of range (the network has %d outputs).\n", pPars->iOutput, Abc_NtkPoNum(pNtk) );
         return 1;
     }
-    if ( pPars->nMaxSlices > 0 && pPars->nSliceFrames == 0 )
+    if ( pPars->nMaxSlices > 0 && pPars->nSliceFrames == 0 && pPars->nConfBudget == 0 && pPars->nPropBudget == 0 )
     {
-        Abc_Print( -1, "Switch -R requires -S.\n" );
+        Abc_Print( -1, "Switch -R requires at least one of -S, -B, -P.\n" );
         return 1;
     }
-    if ( pPars->nSliceFrames > 0 && pPars->iOutput < 0 )
+    if ( (pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0) && pPars->iOutput < 0 )
     {
-        Abc_Print( -1, "Switch -S requires a single output (-O num).\n" );
+        Abc_Print( -1, "Switches -S, -B, -P require a single output (-O num).\n" );
         return 1;
     }
     if ( pPars->iOutput < 0 && pAbc->fBatchMode && (pAbc->Status == 0 || pAbc->Status == 1) ) 
@@ -33899,12 +33899,12 @@ usage:
     Abc_Print( -2, "\t-T num : runtime limit, in seconds (0 = no limit) [default = %d]\n",                   pPars->nTimeOut );
     Abc_Print( -2, "\t-H num : runtime limit per output, in milliseconds (with \"-a\") [default = %d]\n",    pPars->nTimeOutOne );
     Abc_Print( -2, "\t-G num : runtime gap since the last CEX (0 = no limit) [default = %d]\n",              pPars->nTimeOutGap );
-    Abc_Print( -2, "\t-S num : frame levels explored per slice; enables pause/resume [default = off]\n",     pPars->nSliceFrames );
-    Abc_Print( -2, "\t-R num : max number of slices, needs -S [default = unlimited]\n",                      pPars->nMaxSlices );
+    Abc_Print( -2, "\t-S num : frame levels explored per slice; enables pause/resume [default = off]\n" );
+    Abc_Print( -2, "\t-R num : max number of slices, needs -S, -B or -P [default = unlimited]\n" );
     Abc_Print( -2, "\t-L file: the log file name [default = %s]\n",                                          pLogFileName ? pLogFileName : "no logging" );
     Abc_Print( -2, "\t-I file: the invariant file name [default = %s]\n",                                    pPars->pInvFileName ? pPars->pInvFileName : "default name" );
-    Abc_Print( -2, "\t-B num : total conflict budget (CB) for the whole run (0 = no limit) [default = %d]\n",    (int)pPars->nConfBudget );
-    Abc_Print( -2, "\t-P num : total propagation budget (PB) for the whole run (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
+    Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
+    Abc_Print( -2, "\t-P num : SAT propagations per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
     Abc_Print( -2, "\t-O num : zero-based index of the only output to solve (-1 = all) [default = %d]\n", pPars->iOutput );
     Abc_Print( -2, "\t-a     : toggle solving all outputs even if one of them is SAT [default = %s]\n",      pPars->fSolveAll? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle storing CEXes when solving all outputs [default = %s]\n",              pPars->fStoreCex? "yes": "no" );

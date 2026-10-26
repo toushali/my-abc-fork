@@ -1492,6 +1492,18 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
   SeeAlso     []
 
 ***********************************************************************/
+static void Pdr_ManSatWork( Pdr_Man_t * p, long long * pConf, long long * pProp )
+{
+    sat_solver * pSat;
+    int i;
+    *pConf = *pProp = 0;
+    Vec_PtrForEachEntry( sat_solver *, p->vSolvers, pSat, i )
+        if ( pSat )
+            {
+                *pConf += pSat->stats.conflicts;
+                *pProp += pSat->stats.propagations;
+            }
+}
 int Pdr_ManSolveInt( Pdr_Man_t * p )
 {
     int fPrintClauses = 0;
@@ -1501,9 +1513,10 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     int iFrame, RetValue = -1;
     int nOutDigits = Abc_Base10Log( Saig_ManPoNum(p->pAig) );
     abctime clkStart = Abc_Clock(), clkOne = 0;
-    p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
-    int fResume, iStartFrame; //Toushali 1505 to 1527
-    fResume = ( p->pPars->nSliceFrames > 0 && Vec_PtrSize(p->vSolvers) > 0 );
+    int fResume, iStartFrame, fSlicing;
+    long long nConfNow, nPropNow, nConfSlice, nPropSlice;
+    fSlicing = ( p->pPars->nSliceFrames > 0 || p->pPars->nConfBudget > 0 || p->pPars->nPropBudget > 0 );
+    fResume  = ( fSlicing && Vec_PtrSize(p->vSolvers) > 0 );
     if ( !fResume )
     {
         p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
@@ -1525,6 +1538,9 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     else
         iFrame = Vec_PtrSize(p->vSolvers) - 1;     // resume at the last opened frame
     iStartFrame = iFrame;
+    Pdr_ManSatWork( p, &nConfNow, &nPropNow );
+    p->nConfStart = nConfNow;
+    p->nPropStart = nPropNow;
     while ( 1 )
     {
         int fRefined = 0;
@@ -1865,8 +1881,21 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
             p->pPars->iFrame = iFrame;
             return -1;
         }
-        if ( p->pPars->nSliceFrames > 0 && iFrame - iStartFrame >= p->pPars->nSliceFrames )
-            return PURSE_PAUSED; //Toushali
+        if ( fSlicing )
+        {
+            int fPause = 0;
+            if ( p->pPars->nSliceFrames > 0 && iFrame - iStartFrame >= p->pPars->nSliceFrames )
+                fPause = 1;
+            Pdr_ManSatWork( p, &nConfNow, &nPropNow );
+            nConfSlice = nConfNow - p->nConfStart;
+            nPropSlice = nPropNow - p->nPropStart;
+            if ( p->pPars->nConfBudget > 0 && nConfSlice >= p->pPars->nConfBudget )
+                fPause = 1;
+            if ( p->pPars->nPropBudget > 0 && nPropSlice >= p->pPars->nPropBudget )
+                fPause = 1;
+            if ( fPause )
+                return PURSE_PAUSED; // Toushali: -S, -B or -P budget used up, finish frame first
+        }
     }
     assert( 0 );
     return -1;
@@ -1952,6 +1981,7 @@ void Pdr_ManPursePrintFootprint( Pdr_Man_t * p, int iGoal, int RetValue, abctime
     Pdr_Set_t * pCube;
     int k, i;
     long long nClauses = 0, nLits = 0;
+    long long nConfTotal, nPropTotal;
     const char * pResult = (RetValue == 1) ? "SAFE" : (RetValue == 0) ? "UNSAFE" :
                            (RetValue == PURSE_PAUSED) ? "PAUSED" : "UNKNOWN";
     // clauses currently stored in the PDR frame vectors, and their literals
@@ -1961,13 +1991,16 @@ void Pdr_ManPursePrintFootprint( Pdr_Man_t * p, int iGoal, int RetValue, abctime
             nClauses++;
             nLits += pCube->nLits;
         }
-    Abc_Print( 1, "c [PURSE] po=%d result=%s obligations=%lld clauses=%lld literals=%lld avg_lits=%.4f sat_calls=%lld frames=%d time=%.6f\n",
+    // SAT work summed over all frame solvers (solvers are freed later in Pdr_ManStop)
+    Pdr_ManSatWork( p, &nConfTotal, &nPropTotal );
+    Abc_Print( 1, "c [PURSE] po=%d result=%s obligations=%lld clauses=%lld literals=%lld avg_lits=%.4f sat_calls=%lld frames=%d conflicts=%lld propagations=%lld time=%.6f\n",
         iGoal, pResult,
         (long long)p->nObligs,
         nClauses, nLits,
         nClauses ? (double)nLits / nClauses : 0.0,
         (long long)p->nCalls,
         p->nFrames,
+        nConfTotal, nPropTotal,
         1.0 * Time / CLOCKS_PER_SEC );
 }
 /*Toushali Banerjee
@@ -1977,15 +2010,20 @@ static void Pdr_ManPurseSlicePrint( Pdr_Man_t * p, int iSlice, int RetValue, int
 {
     const char * pRes = RetValue == 1 ? "SAFE" : RetValue == 0 ? "UNSAFE" :
                         RetValue == PURSE_PAUSED ? "PAUSED" : "UNKNOWN";
-    Abc_Print( 1, "c [PURSE-SLICE] slice=%d result=%s frame=%d sat_calls_total=%d sat_calls_slice=%d mgr=%p time=%.6f\n",
+    long long nConfTotal, nPropTotal;
+    Pdr_ManSatWork( p, &nConfTotal, &nPropTotal );
+    Abc_Print( 1, "c [PURSE-SLICE] slice=%d result=%s frame=%d sat_calls_total=%d sat_calls_slice=%d "
+                  "conf_total=%lld conf_slice=%lld prop_total=%lld prop_slice=%lld mgr=%p time=%.6f\n",
         iSlice, pRes, Vec_PtrSize(p->vSolvers) - 1, p->nCalls, p->nCalls - nCallsBefore,
+        nConfTotal, nConfTotal - p->nConfStart,
+        nPropTotal, nPropTotal - p->nPropStart,
         (void *)p, 1.0 * clk / CLOCKS_PER_SEC );
 }
 int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 {
     Pdr_Man_t * p;
     int k, RetValue;
-    int iSlice, nSlices;  
+    int iSlice, nSlices, fSlicing;
     abctime clk = Abc_Clock(), clkSolve;
     if ( pPars->nTimeOutOne && !pPars->fSolveAll )
         pPars->nTimeOutOne = 0;
@@ -1993,7 +2031,6 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
         pPars->nTimeOut = pPars->nTimeOutOne * Saig_ManPoNum(pAig) / 1000 + (int)((pPars->nTimeOutOne * Saig_ManPoNum(pAig) % 1000) > 0);
     if ( pPars->fVerbose )
     {
-//    Abc_Print( 1, "Running PDR by Niklas Een (aka IC3 by Aaron Bradley) with these parameters:\n" );
         Abc_Print( 1, "VarMax = %d. FrameMax = %d. QueMax = %d. TimeMax = %d. ",
             pPars->nRecycle,
             pPars->nFrameMax,
@@ -2007,14 +2044,18 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     ABC_FREE( pAig->pSeqModel );
     p = Pdr_ManStart( pAig, pPars, NULL );
     clkSolve = Abc_Clock();
-    nSlices = pPars->nSliceFrames > 0 ? (pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY) : 1;
+
+    // PURSE: slicing is on if any of -S, -B, -P is given
+    fSlicing = pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0;
+    // -R = max number of slices; without -R, slice until a verdict or -T
+    nSlices  = fSlicing ? (pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY) : 1;
     for ( iSlice = 1; iSlice <= nSlices; iSlice++ )
     {
         long long nCallsBefore = (long long)p->nCalls;
         abctime clkSlice = Abc_Clock();
         RetValue = Pdr_ManSolveInt( p );
-        if ( pPars->nSliceFrames > 0 )
-            Pdr_ManPurseSlicePrint( p, iSlice, RetValue, nCallsBefore, Abc_Clock() - clkSlice );
+        if ( fSlicing )
+            Pdr_ManPurseSlicePrint( p, iSlice, RetValue, (int)nCallsBefore, Abc_Clock() - clkSlice );
         if ( RetValue != PURSE_PAUSED )
             break;
     }
