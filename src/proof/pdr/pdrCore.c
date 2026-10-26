@@ -21,9 +21,8 @@
 #include "pdrInt.h"
 #include "base/main/main.h"
 #include "misc/hash/hash.h"
-
 ABC_NAMESPACE_IMPL_START
-
+#define PURSE_PAUSED  (-2)
 
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
@@ -50,13 +49,17 @@ extern int Gia_ManToBridgeAbort( FILE * pFile, int Size, unsigned char * pBuffer
 void Pdr_ManSetDefaultParams( Pdr_Par_t * pPars )
 {
     memset( pPars, 0, sizeof(Pdr_Par_t) );
-//    pPars->iOutput        =      -1;  // zero-based output number
+    pPars->iOutput        =      -1;  // zero-based output number
+    pPars->nSliceFrames = 0;
+    pPars->nMaxSlices   = 0;
     pPars->nRecycle       =     300;  // limit on vars for recycling
     pPars->nFrameMax      =   10000;  // limit on number of timeframes
     pPars->nTimeOut       =       0;  // timeout in seconds
     pPars->nTimeOutGap    =       0;  // timeout in seconds since the last solved
     pPars->nConfLimit     =       0;  // limit on SAT solver conflicts
     pPars->nConfGenLimit  =       0;  // limit on SAT solver conflicts during generalization
+    pPars->nConfBudget    =       0;  // Toushali PURSE: total conflict budget (0 = no limit)
+    pPars->nPropBudget    =       0;  // Toushali PURSE: total propagation budget (0 = no limit)
     pPars->nRestLimit     =       0;  // limit on the number of proof-obligations
     pPars->nRandomSeed   = 91648253;  // value to seed the SAT solver with
     pPars->fTwoRounds     =       0;  // use two rounds for generalization
@@ -1499,20 +1502,29 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
     int nOutDigits = Abc_Base10Log( Saig_ManPoNum(p->pAig) );
     abctime clkStart = Abc_Clock(), clkOne = 0;
     p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
-    assert( Vec_PtrSize(p->vSolvers) == 0 );
-    // in the multi-output mode, mark trivial POs (those fed by const0) as solved 
-    if ( p->pPars->fSolveAll )
-        Saig_ManForEachPo( p->pAig, pObj, iFrame )
-            if ( Aig_ObjChild0(pObj) == Aig_ManConst0(p->pAig) )
-            {
-                Vec_IntWriteEntry( p->pPars->vOutMap, iFrame, 1 ); // unsat
-                p->pPars->nProveOuts++;
-                if ( p->pPars->fUseBridge )
-                    Gia_ManToBridgeResult( stdout, 1, NULL, iFrame );
-            }
-    // create the first timeframe
-    p->pPars->timeLastSolved = Abc_Clock();
-    Pdr_ManCreateSolver( p, (iFrame = 0) );
+    int fResume, iStartFrame; //Toushali 1505 to 1527
+    fResume = ( p->pPars->nSliceFrames > 0 && Vec_PtrSize(p->vSolvers) > 0 );
+    if ( !fResume )
+    {
+        p->timeToStop = p->pPars->nTimeOut ? p->pPars->nTimeOut * CLOCKS_PER_SEC + Abc_Clock(): 0;
+        assert( Vec_PtrSize(p->vSolvers) == 0 );
+        // in the multi-output mode, mark trivial POs (those fed by const0) as solved 
+        if ( p->pPars->fSolveAll )
+            Saig_ManForEachPo( p->pAig, pObj, iFrame )
+                if ( Aig_ObjChild0(pObj) == Aig_ManConst0(p->pAig) )
+                {
+                    Vec_IntWriteEntry( p->pPars->vOutMap, iFrame, 1 ); // unsat
+                    p->pPars->nProveOuts++;
+                    if ( p->pPars->fUseBridge )
+                        Gia_ManToBridgeResult( stdout, 1, NULL, iFrame );
+                }
+        // create the first timeframe
+        p->pPars->timeLastSolved = Abc_Clock();
+        Pdr_ManCreateSolver( p, (iFrame = 0) );
+    }
+    else
+        iFrame = Vec_PtrSize(p->vSolvers) - 1;     // resume at the last opened frame
+    iStartFrame = iFrame;
     while ( 1 )
     {
         int fRefined = 0;
@@ -1534,6 +1546,9 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
         p->iUseFrame = Abc_MaxInt(iFrame, 1);
         Saig_ManForEachPo( p->pAig, pObj, p->iOutCur )
         {
+            // PURSE: when one output is selected, skip all the others
+            if ( p->pPars->iOutput >= 0 && p->iOutCur != p->pPars->iOutput )
+                continue;
             // skip disproved outputs
             if ( p->vCexes && Vec_PtrEntry(p->vCexes, p->iOutCur) )
                 continue;
@@ -1780,6 +1795,12 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                 Pdr_ManReportInvariant( p );
             if ( !p->pPars->fSilent )
                 Pdr_ManVerifyInvariant( p );
+             // Toushali Banerjee -> PURSE: only the selected output was proved
+            if ( p->pPars->iOutput >= 0 )
+            {
+                p->pPars->nProveOuts = 1;
+                return 1; // UNSAT for this output
+            }
             p->pPars->iFrame = iFrame;
             // count the number of UNSAT outputs
             p->pPars->nProveOuts = Saig_ManPoNum(p->pAig) - p->pPars->nFailOuts - p->pPars->nDropOuts;
@@ -1844,6 +1865,8 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
             p->pPars->iFrame = iFrame;
             return -1;
         }
+        if ( p->pPars->nSliceFrames > 0 && iFrame - iStartFrame >= p->pPars->nSliceFrames )
+            return PURSE_PAUSED; //Toushali
     }
     assert( 0 );
     return -1;
@@ -1885,6 +1908,119 @@ int Pdr_ManSolve( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     ABC_FREE( pAig->pSeqModel );
     p = Pdr_ManStart( pAig, pPars, NULL );
     RetValue = Pdr_ManSolveInt( p );
+    if ( RetValue == 0 )
+        assert( pAig->pSeqModel != NULL || p->vCexes != NULL );
+    if ( p->vCexes )
+    {
+        assert( p->pAig->vSeqModelVec == NULL );
+        p->pAig->vSeqModelVec = p->vCexes;
+        p->vCexes = NULL;
+    }
+    if ( p->pPars->fDumpInv )
+    {
+        char * pFileName = pPars->pInvFileName ? pPars->pInvFileName : Extra_FileNameGenericAppend(p->pAig->pName, "_inv.pla");
+        Abc_FrameSetInv( Pdr_ManDeriveInfinityClauses( p, RetValue!=1 ) );
+        Pdr_ManDumpClauses( p, pFileName, RetValue==1 );
+        printf( "Dumped inductive invariant in file \"%s\".\n", pFileName );
+    }
+    else if ( RetValue == 1 )
+        Abc_FrameSetInv( Pdr_ManDeriveInfinityClauses( p, RetValue!=1 ) );
+    p->tTotal += Abc_Clock() - clk;
+    Pdr_ManStop( p );
+    pPars->iFrame--;
+    // convert all -2 (unknown) entries into -1 (undec)
+    if ( pPars->vOutMap )
+        for ( k = 0; k < Saig_ManPoNum(pAig); k++ )
+            if ( Vec_IntEntry(pPars->vOutMap, k) == -2 ) // unknown
+                Vec_IntWriteEntry( pPars->vOutMap, k, -1 ); // undec
+    if ( pPars->pFuncProgress && (RetValue == 0 || RetValue == 1) )
+        pPars->pFuncProgress( pPars->pProgress, 1, (unsigned)RetValue );
+    if ( pPars->fUseBridge )
+        Gia_ManToBridgeAbort( stdout, 7, (unsigned char *)"timeout" );
+    return RetValue;
+}
+/*Creator: Toushali Banerjee
+Date: 16th Oct, 2026
+Purse_ManPurse*/
+/**Function*************************************************************
+  Synopsis    [PURSE: prints the per-goal footprint of one PDR run.]
+  Description [Prints GOAL_ID, |PO|, |phi|, TL, AL, TC, |F|, T.]
+***********************************************************************/
+void Pdr_ManPursePrintFootprint( Pdr_Man_t * p, int iGoal, int RetValue, abctime Time )
+{
+    Vec_Ptr_t * vArray;
+    Pdr_Set_t * pCube;
+    int k, i;
+    long long nClauses = 0, nLits = 0;
+    const char * pResult = (RetValue == 1) ? "SAFE" : (RetValue == 0) ? "UNSAFE" :
+                           (RetValue == PURSE_PAUSED) ? "PAUSED" : "UNKNOWN";
+    // clauses currently stored in the PDR frame vectors, and their literals
+    Vec_VecForEachLevel( p->vClauses, vArray, k )
+        Vec_PtrForEachEntry( Pdr_Set_t *, vArray, pCube, i )
+        {
+            nClauses++;
+            nLits += pCube->nLits;
+        }
+    Abc_Print( 1, "c [PURSE] po=%d result=%s obligations=%lld clauses=%lld literals=%lld avg_lits=%.4f sat_calls=%lld frames=%d time=%.6f\n",
+        iGoal, pResult,
+        (long long)p->nObligs,
+        nClauses, nLits,
+        nClauses ? (double)nLits / nClauses : 0.0,
+        (long long)p->nCalls,
+        p->nFrames,
+        1.0 * Time / CLOCKS_PER_SEC );
+}
+/*Toushali Banerjee
+24th October 2026
+pdr_ManPurseSlicePrint*/
+static void Pdr_ManPurseSlicePrint( Pdr_Man_t * p, int iSlice, int RetValue, int nCallsBefore, abctime clk )
+{
+    const char * pRes = RetValue == 1 ? "SAFE" : RetValue == 0 ? "UNSAFE" :
+                        RetValue == PURSE_PAUSED ? "PAUSED" : "UNKNOWN";
+    Abc_Print( 1, "c [PURSE-SLICE] slice=%d result=%s frame=%d sat_calls_total=%d sat_calls_slice=%d mgr=%p time=%.6f\n",
+        iSlice, pRes, Vec_PtrSize(p->vSolvers) - 1, p->nCalls, p->nCalls - nCallsBefore,
+        (void *)p, 1.0 * clk / CLOCKS_PER_SEC );
+}
+int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
+{
+    Pdr_Man_t * p;
+    int k, RetValue;
+    int iSlice, nSlices;  
+    abctime clk = Abc_Clock(), clkSolve;
+    if ( pPars->nTimeOutOne && !pPars->fSolveAll )
+        pPars->nTimeOutOne = 0;
+    if ( pPars->nTimeOutOne && pPars->nTimeOut == 0 )
+        pPars->nTimeOut = pPars->nTimeOutOne * Saig_ManPoNum(pAig) / 1000 + (int)((pPars->nTimeOutOne * Saig_ManPoNum(pAig) % 1000) > 0);
+    if ( pPars->fVerbose )
+    {
+//    Abc_Print( 1, "Running PDR by Niklas Een (aka IC3 by Aaron Bradley) with these parameters:\n" );
+        Abc_Print( 1, "VarMax = %d. FrameMax = %d. QueMax = %d. TimeMax = %d. ",
+            pPars->nRecycle,
+            pPars->nFrameMax,
+            pPars->nRestLimit,
+            pPars->nTimeOut );
+        Abc_Print( 1, "MonoCNF = %s. SkipGen = %s. SolveAll = %s.\n",
+            pPars->fMonoCnf ?     "yes" : "no",
+            pPars->fSkipGeneral ? "yes" : "no",
+            pPars->fSolveAll ?    "yes" : "no" );
+    }
+    ABC_FREE( pAig->pSeqModel );
+    p = Pdr_ManStart( pAig, pPars, NULL );
+    clkSolve = Abc_Clock();
+    nSlices = pPars->nSliceFrames > 0 ? (pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY) : 1;
+    for ( iSlice = 1; iSlice <= nSlices; iSlice++ )
+    {
+        long long nCallsBefore = (long long)p->nCalls;
+        abctime clkSlice = Abc_Clock();
+        RetValue = Pdr_ManSolveInt( p );
+        if ( pPars->nSliceFrames > 0 )
+            Pdr_ManPurseSlicePrint( p, iSlice, RetValue, nCallsBefore, Abc_Clock() - clkSlice );
+        if ( RetValue != PURSE_PAUSED )
+            break;
+    }
+    Pdr_ManPursePrintFootprint( p, pPars->iOutput, RetValue, Abc_Clock() - clkSolve );   // PURSE report
+    if ( RetValue == PURSE_PAUSED )
+        RetValue = -1;   // downstream code only knows 1, 0, -1
     if ( RetValue == 0 )
         assert( pAig->pSeqModel != NULL || p->vCexes != NULL );
     if ( p->vCexes )

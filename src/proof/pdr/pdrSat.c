@@ -311,6 +311,9 @@ void Pdr_ManSetPropertyOutput( Pdr_Man_t * p, int k )
     pSat = Pdr_ManSolver(p, k);
     Saig_ManForEachPo( p->pAig, pObj, i )
     {
+        // Toushali Banerjee-> PURSE: in single-output mode, assume only the selected output
+        if ( p->pPars->iOutput >= 0 && i != p->pPars->iOutput )
+            continue;
         // skip solved outputs
         if ( p->vCexes && Vec_PtrEntry(p->vCexes, i) )
             continue;

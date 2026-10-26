@@ -1,0 +1,5 @@
+#!/bin/csh -f
+
+set files = `find src \( -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) -print`
+
+cscope -c $files

@@ -3327,6 +3327,75 @@ int Abc_NtkDarPdr( Abc_Ntk_t * pNtk, Pdr_Par_t * pPars )
     Aig_ManStop( pMan );
     return RetValue;
 }
+/*Creator: Toushali Banerjee
+Date: 16th Oct, 2026
+Abc_NtkDarPurse*/
+int Abc_NtkDarPurse( Abc_Ntk_t * pNtk, Pdr_Par_t * pPars )
+{
+    int RetValue = -1;
+    abctime clk = Abc_Clock();
+    Aig_Man_t * pMan;
+    pMan = Abc_NtkToDar( pNtk, 0, 1 );
+    if ( pMan == NULL )
+    {
+        Abc_Print( 1, "Converting network into AIG has failed.\n" );
+        return -1;
+    }
+    RetValue = Pdr_ManPurse( pMan, pPars );
+    pPars->nDropOuts = Saig_ManPoNum(pMan) - pPars->nProveOuts - pPars->nFailOuts;
+    if ( !pPars->fSilent )
+    {
+        if ( pPars->fSolveAll )
+            Abc_Print( 1, "Properties:  All = %d. Proved = %d. Disproved = %d. Undecided = %d.   ", 
+                Saig_ManPoNum(pMan), pPars->nProveOuts, pPars->nFailOuts, pPars->nDropOuts );
+        else if ( RetValue == 1 )
+            Abc_Print( 1, "Property proved.  " );
+        else 
+        {
+            if ( RetValue == 0 )
+            {
+                if ( pMan->pSeqModel == NULL )
+                    Abc_Print( 1, "Abc_NtkDarPurse(): Counter-example is not available.\n" );
+                else
+                {
+                    Abc_Print( 1, "Output %d of miter \"%s\" was asserted in frame %d.  ", pMan->pSeqModel->iPo, pNtk->pName, pMan->pSeqModel->iFrame );
+                    if ( !Saig_ManVerifyCex( pMan, pMan->pSeqModel ) )
+                        Abc_Print( 1, "Abc_NtkDarPurse(): Counter-example verification has FAILED.\n" );
+                }
+            }
+            else if ( RetValue == -1 )
+                Abc_Print( 1, "Property UNDECIDED.  " );
+            else
+                assert( 0 );
+        }
+        ABC_PRT( "Time", Abc_Clock() - clk );
+/*
+        Abc_Print( 1, "Status: " );
+        if ( pPars->pOutMap )
+        {
+            int i;
+            for ( i = 0; i < Saig_ManPoNum(pMan); i++ )
+                if ( pPars->pOutMap[i] == 1 )
+                    Abc_Print( 1, "%d=%s ", i, "unsat" );
+                else if ( pPars->pOutMap[i] == 0 )
+                    Abc_Print( 1, "%d=%s ", i, "sat" );
+                else if ( pPars->pOutMap[i] < 0 )
+                    Abc_Print( 1, "%d=%s ", i, "undec" );
+                else assert( 0 );
+        }
+        Abc_Print( 1, "\n" );
+*/
+    }
+    ABC_FREE( pNtk->pSeqModel );
+    pNtk->pSeqModel = pMan->pSeqModel;
+    pMan->pSeqModel = NULL;
+    if ( pNtk->vSeqModelVec )
+        Vec_PtrFreeFree( pNtk->vSeqModelVec );
+    pNtk->vSeqModelVec = pMan->vSeqModelVec;
+    pMan->vSeqModelVec = NULL;
+    Aig_ManStop( pMan );
+    return RetValue;
+}
 
 /**Function*************************************************************
 

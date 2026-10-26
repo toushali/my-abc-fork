@@ -40,11 +40,15 @@ ABC_NAMESPACE_HEADER_START
 typedef struct Pdr_Par_t_ Pdr_Par_t;
 struct Pdr_Par_t_
 {
-//    int iOutput;          // zero-based number of primary output to solve
+    int iOutput;        // zero-based number of primary output to solve (-1 = all)
+    int nSliceFrames;   // purse: frame levels per slice (-S), 0 = no slicing
+    int nMaxSlices;     // purse: max number of slices (-R), 0 = unlimited
     int nRecycle;         // limit on vars for recycling
     int nFrameMax;        // limit on frame count
     int nConfLimit;       // limit on SAT solver conflicts
     int nConfGenLimit;    // limit on SAT solver conflicts during generalization
+    long long nConfBudget;   // Toushali PURSE: total conflict budget for the run (0 = no limit)
+    long long nPropBudget;   // Toushali PURSE: total propagation budget for the run (0 = no limit)
     int nRestLimit;       // limit on the number of proof-obligations
     int nTimeOut;         // timeout in seconds
     int nTimeOutGap;      // approximate timeout in seconds since the last change
@@ -101,6 +105,10 @@ struct Pdr_Par_t_
 /*=== pdrCore.c ==========================================================*/
 extern void               Pdr_ManSetDefaultParams( Pdr_Par_t * pPars );
 extern int                Pdr_ManSolve( Aig_Man_t * p, Pdr_Par_t * pPars );
+/*Creator: Toushali Banerjee
+Date: 16th Oct, 2026
+Purse_ManSolve*/
+extern int                Pdr_ManPurse( Aig_Man_t * p, Pdr_Par_t * pPars );
 
 
 ABC_NAMESPACE_HEADER_END
