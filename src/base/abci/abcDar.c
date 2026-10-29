@@ -3333,6 +3333,7 @@ Abc_NtkDarPurse*/
 int Abc_NtkDarPurse( Abc_Ntk_t * pNtk, Pdr_Par_t * pPars )
 {
     int RetValue = -1;
+    int fSched;
     abctime clk = Abc_Clock();
     Aig_Man_t * pMan;
     pMan = Abc_NtkToDar( pNtk, 0, 1 );
@@ -3343,7 +3344,8 @@ int Abc_NtkDarPurse( Abc_Ntk_t * pNtk, Pdr_Par_t * pPars )
     }
     RetValue = Pdr_ManPurse( pMan, pPars );
     pPars->nDropOuts = Saig_ManPoNum(pMan) - pPars->nProveOuts - pPars->nFailOuts;
-    if ( !pPars->fSilent )
+    fSched = pPars->iOutput < 0 && ( pPars->nSliceFrames > 0 || pPars->nConfBudget > 0 || pPars->nPropBudget > 0 );
+    if ( !pPars->fSilent && !fSched)
     {
         if ( pPars->fSolveAll )
             Abc_Print( 1, "Properties:  All = %d. Proved = %d. Disproved = %d. Undecided = %d.   ", 

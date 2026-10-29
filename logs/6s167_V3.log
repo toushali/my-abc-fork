@@ -1,0 +1,70 @@
+======== ABC command line "read_aiger test-designs/6s167.aig; fold; strash; purse -B 1000 -P 50000 -T 100 -V 3"
+Warning: The network has no constraints.
+Invariant F[2] : 2 clauses with 4 flops (out of 64) (cex = 0, ave = 4.00)
+Verification of invariant with 2 clauses was successful.  Time =     0.00 sec
+c [PURSE-SCHED] round=1 po=0 result=SAFE frame=4 sat_calls_total=25 sat_calls_incr=25 conf_total=27 conf_incr=27 prop_total=9234 prop_incr=9234 over_conf=0 over_prop=0 mgr=0x5ca635c1e1f0 time=0.006837
+c [PURSE-SOLVED] po=0 res=1 round=1 total_sat_calls=25 time=0.116
+c [PURSE] po=0 result=SAFE obligations=3 clauses=3 literals=10 avg_lits=3.3333 sat_calls=25 frames=2 conflicts=27 propagations=9234 time=0.006837
+c [PURSE-SCHED] round=1 po=1 result=UNSAFE frame=1 sat_calls_total=3 sat_calls_incr=3 conf_total=2 conf_incr=2 prop_total=1836 prop_incr=1836 over_conf=0 over_prop=0 mgr=0x5ca635c1d8b0 time=0.004649
+c [PURSE-SOLVED] po=1 res=0 round=1 total_sat_calls=28 time=0.122
+c [PURSE] po=1 result=UNSAFE obligations=3 clauses=0 literals=0 avg_lits=0.0000 sat_calls=3 frames=1 conflicts=2 propagations=1836 time=0.004649
+c [PURSE-SCHED] round=1 po=2 result=UNSAFE frame=1 sat_calls_total=3 sat_calls_incr=3 conf_total=2 conf_incr=2 prop_total=1828 prop_incr=1828 over_conf=0 over_prop=0 mgr=0x5ca635c149d0 time=0.002864
+c [PURSE-SOLVED] po=2 res=0 round=1 total_sat_calls=31 time=0.125
+c [PURSE] po=2 result=UNSAFE obligations=3 clauses=0 literals=0 avg_lits=0.0000 sat_calls=3 frames=1 conflicts=2 propagations=1828 time=0.002864
+c [PURSE-SCHED] round=1 po=3 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=2 conf_incr=2 prop_total=2981 prop_incr=2981 over_conf=0 over_prop=0 mgr=0x5ca635cfc920 time=0.002935
+c [PURSE-SOLVED] po=3 res=0 round=1 total_sat_calls=36 time=0.129
+c [PURSE] po=3 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=2 propagations=2981 time=0.002935
+c [PURSE-SCHED] round=1 po=4 result=UNSAFE frame=1 sat_calls_total=3 sat_calls_incr=3 conf_total=3 conf_incr=3 prop_total=1867 prop_incr=1867 over_conf=0 over_prop=0 mgr=0x5ca6360250f0 time=0.002837
+c [PURSE-SOLVED] po=4 res=0 round=1 total_sat_calls=39 time=0.132
+c [PURSE] po=4 result=UNSAFE obligations=3 clauses=0 literals=0 avg_lits=0.0000 sat_calls=3 frames=1 conflicts=3 propagations=1867 time=0.002837
+c [PURSE-SCHED] round=1 po=5 result=UNSAFE frame=1 sat_calls_total=3 sat_calls_incr=3 conf_total=2 conf_incr=2 prop_total=1855 prop_incr=1855 over_conf=0 over_prop=0 mgr=0x5ca6360bcdc0 time=0.002883
+c [PURSE-SOLVED] po=5 res=0 round=1 total_sat_calls=42 time=0.136
+c [PURSE] po=5 result=UNSAFE obligations=3 clauses=0 literals=0 avg_lits=0.0000 sat_calls=3 frames=1 conflicts=2 propagations=1855 time=0.002883
+c [PURSE-SCHED] round=1 po=6 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=2 conf_incr=2 prop_total=2997 prop_incr=2997 over_conf=0 over_prop=0 mgr=0x5ca636154b40 time=0.002966
+c [PURSE-SOLVED] po=6 res=0 round=1 total_sat_calls=47 time=0.139
+c [PURSE] po=6 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=2 propagations=2997 time=0.002966
+c [PURSE-SCHED] round=1 po=7 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=4 conf_incr=4 prop_total=3108 prop_incr=3108 over_conf=0 over_prop=0 mgr=0x5ca6361ec970 time=0.003061
+c [PURSE-SOLVED] po=7 res=0 round=1 total_sat_calls=52 time=0.142
+c [PURSE] po=7 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=4 propagations=3108 time=0.003061
+c [PURSE-SCHED] round=1 po=8 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=6 conf_incr=6 prop_total=3471 prop_incr=3471 over_conf=0 over_prop=0 mgr=0x5ca6362847a0 time=0.003154
+c [PURSE-SOLVED] po=8 res=0 round=1 total_sat_calls=57 time=0.146
+c [PURSE] po=8 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=6 propagations=3471 time=0.003154
+c [PURSE-SCHED] round=1 po=9 result=UNSAFE frame=1 sat_calls_total=3 sat_calls_incr=3 conf_total=2 conf_incr=2 prop_total=2105 prop_incr=2105 over_conf=0 over_prop=0 mgr=0x5ca63631c5d0 time=0.003067
+c [PURSE-SOLVED] po=9 res=0 round=1 total_sat_calls=60 time=0.150
+c [PURSE] po=9 result=UNSAFE obligations=3 clauses=0 literals=0 avg_lits=0.0000 sat_calls=3 frames=1 conflicts=2 propagations=2105 time=0.003067
+c [PURSE-SCHED] round=1 po=10 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=4 conf_incr=4 prop_total=3312 prop_incr=3312 over_conf=0 over_prop=0 mgr=0x5ca6363b4400 time=0.003139
+c [PURSE-SOLVED] po=10 res=0 round=1 total_sat_calls=65 time=0.153
+c [PURSE] po=10 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=4 propagations=3312 time=0.003139
+c [PURSE-SCHED] round=1 po=11 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=8 conf_incr=8 prop_total=3244 prop_incr=3244 over_conf=0 over_prop=0 mgr=0x5ca63644c230 time=0.003173
+c [PURSE-SOLVED] po=11 res=0 round=1 total_sat_calls=70 time=0.157
+c [PURSE] po=11 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=8 propagations=3244 time=0.003173
+c [PURSE-SCHED] round=1 po=12 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=14 conf_incr=14 prop_total=3443 prop_incr=3443 over_conf=0 over_prop=0 mgr=0x5ca6364e4060 time=0.003362
+c [PURSE-SOLVED] po=12 res=0 round=1 total_sat_calls=75 time=0.161
+c [PURSE] po=12 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=14 propagations=3443 time=0.003362
+c [PURSE-SCHED] round=1 po=13 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=2 conf_incr=2 prop_total=3099 prop_incr=3099 over_conf=0 over_prop=0 mgr=0x5ca63657be90 time=0.003233
+c [PURSE-SOLVED] po=13 res=0 round=1 total_sat_calls=80 time=0.165
+c [PURSE] po=13 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=2 propagations=3099 time=0.003233
+c [PURSE-SCHED] round=1 po=14 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=2 conf_incr=2 prop_total=3021 prop_incr=3021 over_conf=0 over_prop=0 mgr=0x5ca636613cc0 time=0.003117
+c [PURSE-SOLVED] po=14 res=0 round=1 total_sat_calls=85 time=0.168
+c [PURSE] po=14 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=2 propagations=3021 time=0.003117
+c [PURSE-SCHED] round=1 po=15 result=UNSAFE frame=1 sat_calls_total=5 sat_calls_incr=5 conf_total=2 conf_incr=2 prop_total=3033 prop_incr=3033 over_conf=0 over_prop=0 mgr=0x5ca6366abaf0 time=0.003061
+c [PURSE-SOLVED] po=15 res=0 round=1 total_sat_calls=90 time=0.172
+c [PURSE] po=15 result=UNSAFE obligations=4 clauses=1 literals=1 avg_lits=1.0000 sat_calls=5 frames=1 conflicts=2 propagations=3033 time=0.003061
+c [PURSE-TOTAL] variant=3 total_sat_calls=90 undecided_sat_calls=0 time=0.172
+c [PURSE-SUMMARY] po=0 final=SAFE slices=1 frames=4 sat_calls=25 conflicts=27 propagations=9234 time=0.006837 rounds=S
+c [PURSE-SUMMARY] po=1 final=UNSAFE slices=1 frames=1 sat_calls=3 conflicts=2 propagations=1836 time=0.004649 rounds=U
+c [PURSE-SUMMARY] po=2 final=UNSAFE slices=1 frames=1 sat_calls=3 conflicts=2 propagations=1828 time=0.002864 rounds=U
+c [PURSE-SUMMARY] po=3 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=2 propagations=2981 time=0.002935 rounds=U
+c [PURSE-SUMMARY] po=4 final=UNSAFE slices=1 frames=1 sat_calls=3 conflicts=3 propagations=1867 time=0.002837 rounds=U
+c [PURSE-SUMMARY] po=5 final=UNSAFE slices=1 frames=1 sat_calls=3 conflicts=2 propagations=1855 time=0.002883 rounds=U
+c [PURSE-SUMMARY] po=6 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=2 propagations=2997 time=0.002966 rounds=U
+c [PURSE-SUMMARY] po=7 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=4 propagations=3108 time=0.003061 rounds=U
+c [PURSE-SUMMARY] po=8 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=6 propagations=3471 time=0.003154 rounds=U
+c [PURSE-SUMMARY] po=9 final=UNSAFE slices=1 frames=1 sat_calls=3 conflicts=2 propagations=2105 time=0.003067 rounds=U
+c [PURSE-SUMMARY] po=10 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=4 propagations=3312 time=0.003139 rounds=U
+c [PURSE-SUMMARY] po=11 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=8 propagations=3244 time=0.003173 rounds=U
+c [PURSE-SUMMARY] po=12 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=14 propagations=3443 time=0.003362 rounds=U
+c [PURSE-SUMMARY] po=13 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=2 propagations=3099 time=0.003233 rounds=U
+c [PURSE-SUMMARY] po=14 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=2 propagations=3021 time=0.003117 rounds=U
+c [PURSE-SUMMARY] po=15 final=UNSAFE slices=1 frames=1 sat_calls=5 conflicts=2 propagations=3033 time=0.003061 rounds=U
+Properties:  All = 16. Proved = 1. Disproved = 15. Undecided = 0.   Time =     0.17 sec

@@ -33593,7 +33593,7 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Pdr_ManSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "MFCDQTHGSRBPOLIaxrmuyfqipdegjonctksvwzhb" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "MFCDQTHGSRVBPOLIaxrmuyfqipdegjonctksvwzhb" ) ) != EOF )
     {
         switch ( c )
         {
@@ -33738,6 +33738,17 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nMaxSlices = atoi(argv[globalUtilOptind]);
             globalUtilOptind++;
             if ( pPars->nMaxSlices <= 0 )
+                goto usage;
+            break;
+        case 'V':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-V\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            pPars->nOrderVar = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nOrderVar < 0 || pPars->nOrderVar > 3 )
                 goto usage;
             break;
         case 'L':
@@ -33901,6 +33912,7 @@ usage:
     Abc_Print( -2, "\t-G num : runtime gap since the last CEX (0 = no limit) [default = %d]\n",              pPars->nTimeOutGap );
     Abc_Print( -2, "\t-S num : frame levels explored per slice; enables pause/resume [default = off]\n" );
     Abc_Print( -2, "\t-R num : max number of slices, needs -S, -B or -P [default = unlimited]\n" );
+    Abc_Print( -2, "\t-V num : round-robin order: 0 = fixed, 1 = SAT calls per frame, 2 = frames then combined score [default = %d], 3 = variant 2 plus adaptive budgets [default = %d]\n", pPars->nOrderVar ); //Toushali
     Abc_Print( -2, "\t-L file: the log file name [default = %s]\n",                                          pLogFileName ? pLogFileName : "no logging" );
     Abc_Print( -2, "\t-I file: the invariant file name [default = %s]\n",                                    pPars->pInvFileName ? pPars->pInvFileName : "default name" );
     Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
