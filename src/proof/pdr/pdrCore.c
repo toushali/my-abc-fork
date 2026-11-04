@@ -2197,7 +2197,7 @@ static int Purse_CmpEff( const void * a, const void * b )
 }
 
 // Class: 2 = progressing (double), 1 = neutral (keep), 0 = stalled (halve, never below Base/8)
-static int Purse_Next( int Cur, int Base, int Class )
+/*static int Purse_Next( int Cur, int Base, int Class )
 {
     int Floor = Base / 8 > 0 ? Base / 8 : 1;
     if ( Class == 2 ) return Cur > 0x3fffffff ? Cur : Cur * 2;
@@ -2239,6 +2239,56 @@ static void Purse_Allocate( Purse_Ctx_t ** pCtx, int nPos, int iRound )
                    c->dF, c->dTC, c->dPO, c->dPhi, c->Pars.nConfBudget, c->Pars.nPropBudget );
     }
     ABC_FREE( pA );
+}*/
+// V3-N: budget-neutral proportional allocation
+// weight w = 0.5 (stalled), 1 (neutral), 2 (progressing)
+// CB_i = BaseCB * N * w_i / sum(w),   PB_i = BasePB * N * w_i / sum(w)
+static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
+{
+    Purse_Ctx_t ** pA = ABC_ALLOC( Purse_Ctx_t *, nPos );
+    double * pW = ABC_ALLOC( double, nPos );
+    double SumW = 0;
+    Purse_Ctx_t * c;
+    int k, r, nA = 0;
+
+    // 1. deltas of the last round and Eff (same as the old V3)
+    for ( k = 0; k < nPos; k++ )
+    {
+        c = pCtx[k];
+        if ( c->Status != PURSE_ST_ACTIVE ) continue;
+        c->dF   = c->nF   - c->nFPrev;
+        c->dTC  = c->nTC  - c->nTCPrev;
+        c->dPO  = c->nPO  - c->nPOPrev;
+        c->dPhi = c->nPhi - c->nPhiPrev;
+        c->Eff  = (double)c->dF / ( (double)c->dTC + PURSE_EPS );
+        c->nFPrev = c->nF;   c->nTCPrev = c->nTC;
+        c->nPOPrev = c->nPO; c->nPhiPrev = c->nPhi;
+        pA[nA++] = c;
+    }
+
+    // 2. rank by Eff (lowest first) and give each property a weight
+    qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpEff );
+    for ( r = 0; r < nA; r++ )
+    {
+        c = pA[r];
+        if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.5;   // stalled
+        else if ( r >= nA - nA / 3 )         pW[r] = 2.0;   // progressing
+        else                                 pW[r] = 1.0;   // neutral
+        SumW += pW[r];
+    }
+
+    // 3. split the total budget (Base * N) in proportion to the weights
+    for ( r = 0; r < nA; r++ )
+    {
+        c = pA[r];
+        c->Pars.nConfBudget = (int)( (double)c->nConfBase * nA * pW[r] / SumW );
+        c->Pars.nPropBudget = (int)( (double)c->nPropBase * nA * pW[r] / SumW );
+        Abc_Print( 1, "c [PURSE-ALLOC-N] round=%d po=%d eff=%.6f w=%.1f dF=%lld dTC=%lld dPO=%lld dPhi=%lld conf=%d prop=%d\n",
+                   iRound, c->iPo, c->Eff, pW[r],
+                   c->dF, c->dTC, c->dPO, c->dPhi, c->Pars.nConfBudget, c->Pars.nPropBudget );
+    }
+    ABC_FREE( pA );
+    ABC_FREE( pW );
 }
 
 static long long Purse_SumTC( Purse_Ctx_t ** pCtx, int nPos, int fSolved )   // -1 = all
@@ -2260,11 +2310,6 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     Purse_Ctx_t ** pCtx = ABC_CALLOC( Purse_Ctx_t *, nPos );
     Purse_Ctx_t ** pSeq = ABC_ALLOC( Purse_Ctx_t *, nPos );   // current visiting order
     int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0, nSolved;
-    int size  = Aig_ManAndNum( pAig );
-    int gates = 1000;                      // designer's choice
-    int mult  = size < gates ? 1 : size < gates * 10 ? (size % gates) + 1 : 11;
-    pPars->nConfBudget *= mult;
-    pPars->nPropBudget *= mult;
     ABC_FREE( pAig->pSeqModel );
     for ( i = 0; i < nPos; i++ )
     {
@@ -2305,12 +2350,12 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             Res = Purse_CtxRunSlice( c, iRound );
             if ( Res == PURSE_PAUSED )
             {
-                Vec_StrPush( c->vHist, 'P' );
+                Vec_StrPush( c->vHist, 'P' );         // paused
                 nActive++;
             }
             else if ( Res == 1 || Res == 0 )
             {
-                Vec_StrPush( c->vHist, Res ? 'S' : 'U' );
+                Vec_StrPush( c->vHist, Res ? 'S' : 'U' );       //safe and unsafe
                 nSolved++;
                 c->fSolved = 1;
                 Abc_Print( 1, "c [PURSE-SOLVED] po=%d res=%d round=%d total_sat_calls=%lld time=%.3f\n",
@@ -2329,7 +2374,7 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
         }
         if ( pPars->nOrderVar > 0 && nActive > 0 )
         {
-            if ( nSolved == 0 && pPars->nOrderVar < 3 )              // nothing finished this round: double the budgets
+            if ( nSolved == 0 )              // nothing finished this round: double the budgets V1,V2,V3
             {
                 for ( k = 0; k < nPos; k++ )
                     if ( pCtx[k]->Status == PURSE_ST_ACTIVE )
@@ -2340,8 +2385,10 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                         pCtx[k]->Pars.nPropBudget = pCtx[k]->nPropBase;
                     }
             }
-            if ( pPars->nOrderVar == 3 )
-                Purse_Allocate( pCtx, nPos, iRound );
+            //if ( pPars->nOrderVar == 3 ) //V3
+            //    Purse_Allocate( pCtx, nPos, iRound );
+            if ( pPars->nOrderVar == 3 ) //V3-N
+                Purse_AllocateN( pCtx, nPos, iRound );
             Purse_Reorder( pSeq, nPos, pPars->nOrderVar );
             Abc_Print( 1, "c [PURSE-ORDER] after_round=%d order=", iRound );
             for ( k = 0; k < nPos; k++ )
