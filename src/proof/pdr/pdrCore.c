@@ -1998,6 +1998,7 @@ struct Purse_Ctx_t_
     char         fSolved;                // 1 = finished SAFE or UNSAFE
     long long   nPOPrev, nPhiPrev;       // proof obligations and clauses at the end of the previous round
     long long   dF, dTC, dPO, dPhi;      // deltas of the last round
+    double       Score;                  // 5-metric normalized score (low = light), used by -E 3
 };
 
 /*Toushali Banerjee
@@ -2082,7 +2083,7 @@ static Purse_Ctx_t * Purse_CtxStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, int iP
     c->Pars.iOutput    = iPo;
     c->Pars.fSolveAll  = 0;           // single-output mode: first cex ends the run
     c->Pars.vOutMap    = NULL;
-    c->Pars.fUseBridge = 0;
+    c->Pars.fUseBridge = 0; 
     c->pMan            = Pdr_ManStart( c->pAig, &c->Pars, NULL );
     c->pMan->timeToStop = timeToStop; // global deadline (see Step 4)
     c->Status          = PURSE_ST_ACTIVE;
@@ -2197,6 +2198,41 @@ static int Purse_CmpEff( const void * a, const void * b )
     if ( x->Eff > y->Eff ) return  1;
     return x->iPo - y->iPo;                 // ties: original property order
 }
+// Same score as in Purse_Reorder: average of 5 metrics, each divided by its maximum
+static void Purse_ComputeScores( Purse_Ctx_t ** pCtx, int nPos )
+{
+    double mTC = 0, mPhi = 0, mPO = 0, mTL = 0, mAL = 0;
+    Purse_Ctx_t * c;
+    int k;
+    // maximum of every metric over the unsolved properties
+    for ( k = 0; k < nPos; k++ )
+    {
+        c = pCtx[k];
+        if ( c->Status != PURSE_ST_ACTIVE ) continue;
+        if ( mTC  < c->nTC  )     mTC  = c->nTC;
+        if ( mPhi < c->nPhi )     mPhi = c->nPhi;
+        if ( mPO  < c->nPO  )     mPO  = c->nPO;
+        if ( mTL  < c->nTL  )     mTL  = c->nTL;
+        if ( mAL  < Purse_AL(c) ) mAL  = Purse_AL(c);
+    }
+    // score of every unsolved property, between 0 and 1
+    for ( k = 0; k < nPos; k++ )
+    {
+        c = pCtx[k];
+        if ( c->Status != PURSE_ST_ACTIVE ) continue;
+        c->Score = ( Purse_Ratio(c->nTC,mTC) + Purse_Ratio(c->nPhi,mPhi) + Purse_Ratio(c->nPO,mPO) +
+                     Purse_Ratio(c->nTL,mTL) + Purse_Ratio(Purse_AL(c),mAL) ) / 5;
+    }
+}
+
+// sort by score
+static int Purse_CmpScore( const void * a, const void * b )
+{
+    Purse_Ctx_t * x = *(Purse_Ctx_t **)a, * y = *(Purse_Ctx_t **)b;
+    if ( x->Score < y->Score ) return -1;
+    if ( x->Score > y->Score ) return  1;
+    return x->iPo - y->iPo;
+}
 
 // Class: 2 = progressing (double), 1 = neutral (keep), 0 = stalled (halve, never below Base/8)
 /*static int Purse_Next( int Cur, int Base, int Class )
@@ -2271,15 +2307,31 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         pA[nA++] = c;
     }
 
-    // 2. rank by Eff (lowest first) and give each property a weight
-    qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpEff );
-    for ( r = 0; r < nA; r++ )
+    // 2. split into three classes and give each property a weight
+    if ( nA > 0 && pA[0]->Pars.nEffFormula == 3 )      // -E 3: split by Score
     {
-        c = pA[r];
-        if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.5;   // stalled
-        else if ( r >= nA - nA / 3 )         pW[r] = 2.0;   // progressing
-        else                                 pW[r] = 1.0;   // neutral
-        SumW += pW[r];
+        Purse_ComputeScores( pCtx, nPos );
+        qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpScore );   // lightest first
+        for ( r = 0; r < nA; r++ )
+        {
+            c = pA[r];
+            if ( c->dF <= 0 || r >= nA - nA / 3 )   pW[r] = 0.5;   // heaviest third, or no frame gained
+            else if ( r < nA / 3 )                   pW[r] = 2.0;   // lightest third
+            else                                     pW[r] = 1.0;   // middle
+            SumW += pW[r];
+        }
+    }
+    else                                                // -E 1 or 2: split by Eff (unchanged)
+    {
+        qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpEff );
+        for ( r = 0; r < nA; r++ )
+        {
+            c = pA[r];
+            if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.5;   // stalled
+            else if ( r >= nA - nA / 3 )         pW[r] = 2.0;   // progressing
+            else                                 pW[r] = 1.0;   // neutral
+            SumW += pW[r];
+        }
     }
 
     // 3. split the total budget (Base * N) in proportion to the weights
@@ -2288,8 +2340,8 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         c = pA[r];
         c->Pars.nConfBudget = (int)( (double)c->nConfBase * nA * pW[r] / SumW );
         c->Pars.nPropBudget = (int)( (double)c->nPropBase * nA * pW[r] / SumW );
-        Abc_Print( 1, "c [PURSE-ALLOC-N] round=%d po=%d eff=%.6f w=%.1f dF=%lld dTC=%lld dPO=%lld dPhi=%lld conf=%d prop=%d\n",
-                   iRound, c->iPo, c->Eff, pW[r],
+                Abc_Print( 1, "c [PURSE-ALLOC-N] round=%d po=%d eff=%.6f score=%.4f w=%.1f dF=%lld dTC=%lld dPO=%lld dPhi=%lld conf=%d prop=%d\n",
+                   iRound, c->iPo, c->Eff, c->Score, pW[r],
                    c->dF, c->dTC, c->dPO, c->dPhi, c->Pars.nConfBudget, c->Pars.nPropBudget );
     }
     ABC_FREE( pA );

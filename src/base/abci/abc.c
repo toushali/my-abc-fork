@@ -33777,7 +33777,7 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
             }
             pPars->nEffFormula = atoi( argv[globalUtilOptind] );
             globalUtilOptind++;
-            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 2 )
+            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 3 )
                 goto usage;
             break;
         case 'a':
@@ -33929,7 +33929,7 @@ usage:
     Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
     Abc_Print( -2, "\t-P num : SAT propagations per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
     Abc_Print( -2, "\t-O num : zero-based index of the only output to solve (-1 = all) [default = %d]\n", pPars->iOutput );
-    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps) [default = %d]\n", pPars->nEffFormula );
+    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps), 3 = 5-metric score [default = %d]\n", pPars->nEffFormula );
     Abc_Print( -2, "\t-a     : toggle solving all outputs even if one of them is SAT [default = %s]\n",      pPars->fSolveAll? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle storing CEXes when solving all outputs [default = %s]\n",              pPars->fStoreCex? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using more effort in generalization [default = %s]\n",                 pPars->fTwoRounds? "yes": "no" );
