@@ -33593,7 +33593,7 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Pdr_ManSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "MFCDQTHGSRVBPOLIaxrmuyfqipdegjonctksvwzhb" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "MFCDQTHGSRVBPOLIEaxrmuyfqipdegjonctksvwzhb" ) ) != EOF )
     {
         switch ( c )
         {
@@ -33769,6 +33769,17 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->pInvFileName = argv[globalUtilOptind];
             globalUtilOptind++;
             break;
+        case 'E':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-E\" should be followed by 1 or 2.\n" );
+                goto usage;
+            }
+            pPars->nEffFormula = atoi( argv[globalUtilOptind] );
+            globalUtilOptind++;
+            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 2 )
+                goto usage;
+            break;
         case 'a':
             pPars->fSolveAll ^= 1;
             break;
@@ -33918,6 +33929,7 @@ usage:
     Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
     Abc_Print( -2, "\t-P num : SAT propagations per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
     Abc_Print( -2, "\t-O num : zero-based index of the only output to solve (-1 = all) [default = %d]\n", pPars->iOutput );
+    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps) [default = %d]\n", pPars->nEffFormula );
     Abc_Print( -2, "\t-a     : toggle solving all outputs even if one of them is SAT [default = %s]\n",      pPars->fSolveAll? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle storing CEXes when solving all outputs [default = %s]\n",              pPars->fStoreCex? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using more effort in generalization [default = %s]\n",                 pPars->fTwoRounds? "yes": "no" );

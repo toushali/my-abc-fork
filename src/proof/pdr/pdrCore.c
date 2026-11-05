@@ -24,6 +24,7 @@
 ABC_NAMESPACE_IMPL_START
 #define PURSE_PAUSED  (-2)
 #define PURSE_EPS 1.0
+#define PURSE_LAMBDA 1.0
 
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
@@ -62,6 +63,7 @@ void Pdr_ManSetDefaultParams( Pdr_Par_t * pPars )
     pPars->nConfGenLimit  =       0;  // limit on SAT solver conflicts during generalization
     pPars->nConfBudget    =       0;  // Toushali PURSE: total conflict budget (0 = no limit)
     pPars->nPropBudget    =       0;  // Toushali PURSE: total propagation budget (0 = no limit)
+    pPars->nEffFormula  = 1;      // formula 1 by default (current behaviour)
     pPars->nRestLimit     =       0;  // limit on the number of proof-obligations
     pPars->nRandomSeed   = 91648253;  // value to seed the SAT solver with
     pPars->fTwoRounds     =       0;  // use two rounds for generalization
@@ -2260,7 +2262,10 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         c->dTC  = c->nTC  - c->nTCPrev;
         c->dPO  = c->nPO  - c->nPOPrev;
         c->dPhi = c->nPhi - c->nPhiPrev;
-        c->Eff  = (double)c->dF / ( (double)c->dTC + PURSE_EPS );
+        if ( c->Pars.nEffFormula == 2 )     // formula 2: SAT calls and proof obligations
+            c->Eff = (double)c->dF / ( (double)c->dTC + PURSE_LAMBDA * (double)c->dPO + PURSE_EPS );
+        else                                // formula 1: SAT calls only
+            c->Eff = (double)c->dF / ( (double)c->dTC + PURSE_EPS );
         c->nFPrev = c->nF;   c->nTCPrev = c->nTC;
         c->nPOPrev = c->nPO; c->nPhiPrev = c->nPhi;
         pA[nA++] = c;

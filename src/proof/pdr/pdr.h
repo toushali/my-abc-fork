@@ -51,6 +51,7 @@ struct Pdr_Par_t_
     long long nPropBudget;   // Toushali PURSE: total propagation budget for the run (0 = no limit)
     long long nConfStart;   // Toushali: total SAT conflicts at start of the current slice
     long long nPropStart;   // Toushali: total SAT propagations at start of the current slice
+    int       nEffFormula;      // PURSE V3-N: progress formula, 1 = dF/(dTC+eps), 2 = dF/(dTC+lambda*dPO+eps)
     int nOrderVar;   // Toushali PURSE: 0 = fixed round-robin, 1 = TC/|F|, 2 = |F| then combined score
     int nRestLimit;       // limit on the number of proof-obligations
     int nTimeOut;         // timeout in seconds

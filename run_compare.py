@@ -11,8 +11,8 @@ import csv, glob, os, re, subprocess
 
 FOLDER = "test-designs"   # folder with the .aig / .aag designs
 VARIANTS = [1, 2, 3]      # values of -V to compare
-B = 1000                  # -B  conflict budget per slice
-P = 50000                 # -P  propagation budget per slice
+B = 25000                  # -B  conflict budget per slice
+P = 50                 # -P  propagation budget per slice
 T = 100                    # -T  time limit per run, in seconds
 
 
