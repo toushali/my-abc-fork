@@ -209,6 +209,10 @@ sat_solver * Pdr_ManFetchSolver( Pdr_Man_t * p, int k )
     if ( Vec_IntEntry(p->vActVars, k) < p->pPars->nRecycle )
         return pSat;
     assert( k < Vec_PtrSize(p->vSolvers) - 1 );
+
+    p->nConfRetired += pSat->stats.conflicts;
+    p->nPropRetired += pSat->stats.propagations;
+    
     p->nStarts++;
 //    sat_solver_delete( pSat );
 //    pSat = sat_solver_new();

@@ -154,6 +154,8 @@ struct Pdr_Man_t_
     int         nCalls;    // the number of SAT calls
     long long nConfStart;   // Toushali PURSE: total SAT conflicts at start of the current slice
     long long nPropStart;   // Toushali PURSE: total SAT propagations at start of the current slice
+    long long    nConfRetired;   // Toushali conflicts done by solvers before a restart
+    long long    nPropRetired;   // Toushali propagations done by solvers before a restart
     int         nCallsS;   // the number of SAT calls (sat)
     int         nCallsU;   // the number of SAT calls (unsat)
     int         nStarts;   // the number of SAT solver restarts

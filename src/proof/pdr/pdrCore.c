@@ -1350,6 +1350,35 @@ int Pdr_ManGeneralize( Pdr_Man_t * p, int k, Pdr_Set_t * pCube, Pdr_Set_t ** ppP
   SeeAlso     []
 
 ***********************************************************************/
+static void Pdr_ManSatWork( Pdr_Man_t * p, long long * pConf, long long * pProp )
+{
+    sat_solver * pSat;
+    int i;
+    *pConf = p->nConfRetired;
+    *pProp = p->nPropRetired;
+    Vec_PtrForEachEntry( sat_solver *, p->vSolvers, pSat, i )
+        if ( pSat )
+            {
+                *pConf += pSat->stats.conflicts;
+                *pProp += pSat->stats.propagations;
+            }
+}
+/*Toushali Banerjee
+8th November, 2026*/
+
+// 1 if the current slice has used up its conflict or propagation budget
+static int Pdr_ManBudgetHit( Pdr_Man_t * p )
+{
+    long long nConf, nProp;
+    if ( p->pPars->nConfBudget <= 0 && p->pPars->nPropBudget <= 0 )
+        return 0;                       // no budget: normal pdr, never pauses
+    Pdr_ManSatWork( p, &nConf, &nProp );
+    if ( p->pPars->nConfBudget > 0 && nConf - p->nConfStart >= p->pPars->nConfBudget )
+        return 1;
+    if ( p->pPars->nPropBudget > 0 && nProp - p->nPropStart >= p->pPars->nPropBudget )
+        return 1;
+    return 0;
+}
 int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
 {
     Pdr_Obl_t * pThis;
@@ -1475,6 +1504,8 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
         // check termination
         if ( p->pPars->pFuncStop && p->pPars->pFuncStop(p->pPars->RunId) )
             return -1;
+        if ( Pdr_ManBudgetHit( p ) )     // NEW: hard budget
+            return -1;
         if ( p->timeToStop && Abc_Clock() > p->timeToStop )
             return -1;
         if ( p->timeToStopOne && Abc_Clock() > p->timeToStopOne )
@@ -1496,18 +1527,7 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
   SeeAlso     []
 
 ***********************************************************************/
-static void Pdr_ManSatWork( Pdr_Man_t * p, long long * pConf, long long * pProp )
-{
-    sat_solver * pSat;
-    int i;
-    *pConf = *pProp = 0;
-    Vec_PtrForEachEntry( sat_solver *, p->vSolvers, pSat, i )
-        if ( pSat )
-            {
-                *pConf += pSat->stats.conflicts;
-                *pProp += pSat->stats.propagations;
-            }
-}
+
 int Pdr_ManSolveInt( Pdr_Man_t * p )
 {
     int fPrintClauses = 0;
@@ -1635,6 +1655,13 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                     break;
                 if ( RetValue == -1 )
                 {
+                    if ( RetValue == -1 && !(p->timeToStop && Abc_Clock() > p->timeToStop) && Pdr_ManBudgetHit(p) )
+                    {
+                        Pdr_QueueClean( p );          // drop the open proof obligations (clauses are kept)
+                        pCube = NULL;
+                        p->pPars->iFrame = iFrame;
+                        return PURSE_PAUSED;          // budget finished, resume this frame next round
+                    }
                     if ( p->pPars->fVerbose )
                         Pdr_ManPrintProgress( p, 1, Abc_Clock() - clkStart );
                     if ( p->timeToStop && Abc_Clock() > p->timeToStop && !p->pPars->fSilent )
@@ -1659,6 +1686,13 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                     RetValue = Pdr_ManBlockCube( p, pCube );
                     if ( RetValue == -1 )
                     {
+                        if ( RetValue == -1 && !(p->timeToStop && Abc_Clock() > p->timeToStop) && Pdr_ManBudgetHit(p) )
+                        {
+                            Pdr_QueueClean( p );          // drop the open proof obligations (clauses are kept)
+                            pCube = NULL;
+                            p->pPars->iFrame = iFrame;
+                            return PURSE_PAUSED;          // budget finished, resume this frame next round
+                        }
                         if ( p->pPars->fVerbose )
                             Pdr_ManPrintProgress( p, 1, Abc_Clock() - clkStart );
                         if ( p->timeToStop && Abc_Clock() > p->timeToStop && !p->pPars->fSilent )
@@ -2315,7 +2349,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            if ( c->dF <= 0 || r >= nA - nA / 3 )   pW[r] = 0.5;   // heaviest third, or no frame gained
+            if ( c->dF <= 0 || r >= nA - nA / 3 )    pW[r] = 0.5;   // heaviest third, or no frame gained
             else if ( r < nA / 3 )                   pW[r] = 2.0;   // lightest third
             else                                     pW[r] = 1.0;   // middle
             SumW += pW[r];

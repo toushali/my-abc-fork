@@ -1,0 +1,36 @@
+======== ABC command line "read_aiger test-designs/6s167.aig; fold; strash; pdr -av -T 10"
+Warning: The network has no constraints.
+VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
+Frame Clauses                                                     Max Queue Flops Cex      Time
+Output  1 was asserted in frame  1 ( 1) (solved  1 out of 16 outputs).
+Output  2 was asserted in frame  1 ( 1) (solved  2 out of 16 outputs).
+Output  3 was asserted in frame  1 ( 1) (solved  3 out of 16 outputs).
+Output  4 was asserted in frame  1 ( 1) (solved  4 out of 16 outputs).
+Output  5 was asserted in frame  1 ( 1) (solved  5 out of 16 outputs).
+Output  6 was asserted in frame  1 ( 1) (solved  6 out of 16 outputs).
+Output  7 was asserted in frame  1 ( 1) (solved  7 out of 16 outputs).
+Output  8 was asserted in frame  1 ( 1) (solved  8 out of 16 outputs).
+Output  9 was asserted in frame  1 ( 1) (solved  9 out of 16 outputs).
+Output 10 was asserted in frame  1 ( 1) (solved 10 out of 16 outputs).
+Output 11 was asserted in frame  1 ( 1) (solved 11 out of 16 outputs).
+Output 12 was asserted in frame  1 ( 1) (solved 12 out of 16 outputs).
+Output 13 was asserted in frame  1 ( 1) (solved 13 out of 16 outputs).
+Output 14 was asserted in frame  1 ( 1) (solved 14 out of 16 outputs).
+Output 15 was asserted in frame  1 ( 1) (solved 15 out of 16 outputs).
+  1 : 0 14                                                                2    16      0.01 sec  CEX =  15
+  2 : 0 1 14                                                              1    16      0.01 sec  CEX =  15
+  3 : 0 1 0 14                                                            0    16      0.01 sec  CEX =  15
+Invariant F[2] : 14 clauses with 16 flops (out of 64) (cex = 0, ave = 9.67)
+Verification of invariant with 14 clauses was successful.  Time =     0.00 sec
+Block =   30  Oblig =    60  Clause =    15  Call =   118 (sat=47.5%)  Cex =   0  Start =   0
+SAT solving =     0.00 sec (  8.41 %)
+  unsat     =     0.00 sec (  0.32 %)
+  sat       =     0.00 sec (  8.10 %)
+Generalize  =     0.00 sec (  2.40 %)
+Push clause =     0.00 sec (  0.68 %)
+Ternary sim =     0.00 sec ( 11.97 %)
+Containment =     0.00 sec (  0.03 %)
+CNF compute =     0.00 sec (  0.76 %)
+Refinement  =     0.00 sec (  0.00 %)
+TOTAL       =     0.02 sec (100.00 %)
+Properties:  All = 16. Proved = 1. Disproved = 15. Undecided = 0.   Time =     0.02 sec
