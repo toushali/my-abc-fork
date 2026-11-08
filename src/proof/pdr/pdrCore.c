@@ -25,6 +25,8 @@ ABC_NAMESPACE_IMPL_START
 #define PURSE_PAUSED  (-2)
 #define PURSE_EPS 1.0
 #define PURSE_LAMBDA 1.0
+#define PURSE_PHI 0.01   // weight of newly learned clauses in Eff
+#define PURSE_MAX_GROWTH 32   // budgets may grow at most 8x above the starting -B / -P
 
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
@@ -2320,6 +2322,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
     Purse_Ctx_t ** pA = ABC_ALLOC( Purse_Ctx_t *, nPos );
     double * pW = ABC_ALLOC( double, nPos );
     double SumW = 0;
+    double dPhiPos, Gain;
     Purse_Ctx_t * c;
     int k, r, nA = 0;
 
@@ -2332,10 +2335,12 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         c->dTC  = c->nTC  - c->nTCPrev;
         c->dPO  = c->nPO  - c->nPOPrev;
         c->dPhi = c->nPhi - c->nPhiPrev;
+        dPhiPos = c->dPhi > 0 ? (double)c->dPhi : 0.0;   // clauses can also be removed, ignore negatives
+        Gain    = (double)c->dF + PURSE_PHI * dPhiPos;   // frames gained + a little credit for new clauses
         if ( c->Pars.nEffFormula == 2 )     // formula 2: SAT calls and proof obligations
-            c->Eff = (double)c->dF / ( (double)c->dTC + PURSE_LAMBDA * (double)c->dPO + PURSE_EPS );
+            c->Eff = Gain / ( (double)c->dTC + PURSE_LAMBDA * (double)c->dPO + PURSE_EPS );
         else                                // formula 1: SAT calls only
-            c->Eff = (double)c->dF / ( (double)c->dTC + PURSE_EPS );
+            c->Eff = Gain / ( (double)c->dTC + PURSE_EPS );
         c->nFPrev = c->nF;   c->nTCPrev = c->nTC;
         c->nPOPrev = c->nPO; c->nPhiPrev = c->nPhi;
         pA[nA++] = c;
@@ -2349,7 +2354,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            if ( c->dF <= 0 || r >= nA - nA / 3 )    pW[r] = 0.5;   // heaviest third, or no frame gained
+            if ( (c->dF <= 0 && c->dPhi <= 0) || r >= nA - nA / 3 )    pW[r] = 0.5;   // heaviest third, or no frame gained
             else if ( r < nA / 3 )                   pW[r] = 2.0;   // lightest third
             else                                     pW[r] = 1.0;   // middle
             SumW += pW[r];
@@ -2393,6 +2398,7 @@ static long long Purse_SumTC( Purse_Ctx_t ** pCtx, int nPos, int fSolved )   // 
 }
 int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 {
+    long long nCapConf, nCapProp;
     int nPos     = Saig_ManPoNum( pAig );
     abctime clkAll = Abc_Clock();
     int nRounds  = pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY;
@@ -2402,6 +2408,8 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     Purse_Ctx_t ** pSeq = ABC_ALLOC( Purse_Ctx_t *, nPos );   // current visiting order
     int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0, nSolved;
     ABC_FREE( pAig->pSeqModel );
+    nCapConf = (long long)pPars->nConfBudget * PURSE_MAX_GROWTH;
+    nCapProp = (long long)pPars->nPropBudget * PURSE_MAX_GROWTH;
     for ( i = 0; i < nPos; i++ )
     {
        pCtx[i] = Purse_CtxStart( pAig, pPars, i, timeToStop );
@@ -2468,13 +2476,15 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             if ( nSolved == 0 )              // nothing finished this round: double the budgets V1,V2,V3
             {
                 for ( k = 0; k < nPos; k++ )
-                    if ( pCtx[k]->Status == PURSE_ST_ACTIVE )
-                    {
+                if ( pCtx[k]->Status == PURSE_ST_ACTIVE )
+                {
+                    if ( (long long)pCtx[k]->nConfBase * 2 <= nCapConf )
                         pCtx[k]->nConfBase *= 2;
+                    if ( (long long)pCtx[k]->nPropBase * 2 <= nCapProp )
                         pCtx[k]->nPropBase *= 2;
-                        pCtx[k]->Pars.nConfBudget = pCtx[k]->nConfBase;
-                        pCtx[k]->Pars.nPropBudget = pCtx[k]->nPropBase;
-                    }
+                    pCtx[k]->Pars.nConfBudget = pCtx[k]->nConfBase;
+                    pCtx[k]->Pars.nPropBudget = pCtx[k]->nPropBase;
+                }
             }
             //if ( pPars->nOrderVar == 3 ) //V3
             //    Purse_Allocate( pCtx, nPos, iRound );
