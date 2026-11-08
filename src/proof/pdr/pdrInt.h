@@ -169,6 +169,7 @@ struct Pdr_Man_t_
     int         nQueLim;
     int         nXsimRuns;
     int         nXsimLits;
+    int         fPursePropLimitActive; //Toushali
     // runtime
     abctime     timeToStop;
     abctime     timeToStopOne;

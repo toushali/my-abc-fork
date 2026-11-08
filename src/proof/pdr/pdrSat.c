@@ -409,6 +409,36 @@ void Pdr_ManCollectValues( Pdr_Man_t * p, int k, Vec_Int_t * vObjIds, Vec_Int_t 
   SeeAlso     []
 
 ***********************************************************************/
+static ABC_INT64_T Pdr_PursePropLeft( Pdr_Man_t * p )
+{
+    sat_solver * pSat;
+    ABC_INT64_T nTotal;
+    int i;
+
+    if ( !p->fPursePropLimitActive )
+        return 0;
+
+    nTotal = (ABC_INT64_T)p->nPropRetired;
+
+    Vec_PtrForEachEntry( sat_solver *, p->vSolvers, pSat, i )
+        if ( pSat )
+            nTotal += pSat->stats.propagations;
+
+    return (ABC_INT64_T)p->pPars->nPropBudget
+         - (nTotal - (ABC_INT64_T)p->nPropStart);
+}
+
+static int Pdr_PurseSatSolve(
+    Pdr_Man_t * p, sat_solver * pSat, lit * pBeg, lit * pEnd, ABC_INT64_T nConfLimit )
+{
+    ABC_INT64_T nPropLeft = Pdr_PursePropLeft( p );
+
+    if ( p->fPursePropLimitActive && nPropLeft <= 0 )
+        return l_Undef;
+
+    return sat_solver_solve(pSat, pBeg, pEnd, nConfLimit, nPropLeft, 0, 0 );
+}
+
 int Pdr_ManCheckCubeCs( Pdr_Man_t * p, int k, Pdr_Set_t * pCube )
 { 
     sat_solver * pSat;
@@ -429,7 +459,7 @@ int Pdr_ManCheckCubeCs( Pdr_Man_t * p, int k, Pdr_Set_t * pCube )
     pSat = Pdr_ManFetchSolver( p, k );
     vLits = Pdr_ManCubeToLits( p, k, pCube, 0, 0 );
     Limit = sat_solver_set_runtime_limit( pSat, Pdr_ManTimeLimit(p) );
-    RetValue = sat_solver_solve( pSat, Vec_IntArray(vLits), Vec_IntArray(vLits) + Vec_IntSize(vLits), 0, 0, 0, 0 );
+    RetValue = Pdr_PurseSatSolve( p, pSat, Vec_IntArray(vLits), Vec_IntArray(vLits) + Vec_IntSize(vLits), 0 );
     sat_solver_set_runtime_limit( pSat, Limit );
     if ( RetValue == l_Undef )
         return -1;
@@ -474,7 +504,7 @@ int Pdr_ManCheckCube( Pdr_Man_t * p, int k, Pdr_Set_t * pCube, Pdr_Set_t ** ppPr
         {
             Lit = Abc_Var2Lit( Pdr_ObjSatVar(p, k, 2, Aig_ManCo(p->pAig, p->iOutCur)), 0 ); // pos literal (property fails)
             Limit = sat_solver_set_runtime_limit( pSat, Pdr_ManTimeLimit(p) );
-            RetValue = sat_solver_solve( pSat, &Lit, &Lit + 1, nConfLimit, 0, 0, 0 );
+            RetValue = Pdr_PurseSatSolve(p, pSat, &Lit, &Lit + 1, nConfLimit );
             sat_solver_set_runtime_limit( pSat, Limit );
         }
         if ( RetValue == l_Undef )
@@ -536,11 +566,14 @@ int Pdr_ManCheckCube( Pdr_Man_t * p, int k, Pdr_Set_t * pCube, Pdr_Set_t ** ppPr
             // solve
             clk = Abc_Clock();
             Limit = sat_solver_set_runtime_limit( pSat, Pdr_ManTimeLimit(p) );
-            RetValue = sat_solver_solve( pSat, Vec_IntArray(vLits), Vec_IntArray(vLits) + Vec_IntSize(vLits), fTryConf ? p->pPars->nConfGenLimit : nConfLimit, 0, 0, 0 );
+            RetValue = Pdr_PurseSatSolve( p, pSat, Vec_IntArray(vLits), Vec_IntArray(vLits) + Vec_IntSize(vLits), fTryConf ? p->pPars->nConfGenLimit : nConfLimit );
             sat_solver_set_runtime_limit( pSat, Limit );
         }
         if ( RetValue == l_Undef )
         {
+            if ( p->fPursePropLimitActive && Pdr_PursePropLeft(p) <= 0 )
+                return -1;
+
             if ( fTryConf && p->pPars->nConfGenLimit )
                 RetValue = l_True;
             else

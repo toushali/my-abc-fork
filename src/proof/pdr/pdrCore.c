@@ -1652,7 +1652,11 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                     p->pPars->iFrame = iFrame;
                     return -1;
                 }
-                RetValue = Pdr_ManCheckCube( p, iFrame, NULL, &pCube, p->pPars->nConfLimit, 0, 1 );
+
+                p->fPursePropLimitActive = (p->pPars->nPropBudget > 0 && !p->pPars->fUseGipSat);
+                RetValue = Pdr_ManCheckCube(p, iFrame, NULL, &pCube, p->pPars->nConfLimit, 0, 1 );
+                p->fPursePropLimitActive = 0;
+
                 if ( RetValue == 1 )
                     break;
                 if ( RetValue == -1 )
@@ -1685,7 +1689,9 @@ int Pdr_ManSolveInt( Pdr_Man_t * p )
                 }
                 if ( RetValue == 0 )
                 {
+                    p->fPursePropLimitActive =(p->pPars->nPropBudget > 0 && !p->pPars->fUseGipSat);
                     RetValue = Pdr_ManBlockCube( p, pCube );
+                    p->fPursePropLimitActive = 0;
                     if ( RetValue == -1 )
                     {
                         if ( RetValue == -1 && !(p->timeToStop && Abc_Clock() > p->timeToStop) && Pdr_ManBudgetHit(p) )
