@@ -26,7 +26,7 @@ ABC_NAMESPACE_IMPL_START
 #define PURSE_EPS 1.0
 #define PURSE_LAMBDA 1.0
 #define PURSE_PHI 0.01   // weight of newly learned clauses in Eff
-#define PURSE_MAX_GROWTH 32   // budgets may grow at most 8x above the starting -B / -P
+//#define PURSE_MAX_GROWTH 32   // budgets may grow at most 8x above the starting -B / -P
 
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
@@ -1390,7 +1390,7 @@ int Pdr_ManBlockCube( Pdr_Man_t * p, Pdr_Set_t * pCube )
     abctime clk;
     p->nBlocks++;
     // create first proof obligation
-//    assert( p->pQueue == NULL );
+    //    assert( p->pQueue == NULL );
     pThis = Pdr_OblStart( kMax, Prio--, pCube, NULL ); // consume ref
     Pdr_QueuePush( p, pThis );
     // try to solve it recursively
@@ -2320,6 +2320,27 @@ static void Purse_Allocate( Purse_Ctx_t ** pCtx, int nPos, int iRound )
     }
     ABC_FREE( pA );
 }*/
+// Toushali: base budget multiplied by the redistribution scale, never above the cap
+/*static int Purse_Scaled( int nBase, double Scale, long long nCap )
+{
+    double v;
+    if ( nBase <= 0 )              // 0 means "no limit": leave it alone
+        return nBase;
+    v = (double)nBase * Scale;
+    if ( v > (double)nCap )  v = (double)nCap;
+    if ( v < (double)nBase ) v = (double)nBase;
+    return (int)v;
+}*/
+// Toushali: base budget multiplied by the redistribution scale (no cap)
+static int Purse_Scaled( int nBase, double Scale )
+{
+    double v;
+    if ( nBase <= 0 )              // 0 means "no limit": leave it alone
+        return nBase;
+    v = (double)nBase * Scale;
+    if ( v > 5.0e8 )  v = 5.0e8;   // only to stop int overflow, far above any real budget
+    return (int)v;
+}
 // V3-N: budget-neutral proportional allocation
 // weight w = 0.5 (stalled), 1 (neutral), 2 (progressing)
 // CB_i = BaseCB * N * w_i / sum(w),   PB_i = BasePB * N * w_i / sum(w)
@@ -2360,7 +2381,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            if ( (c->dF <= 0 && c->dPhi <= 0) || r >= nA - nA / 3 )    pW[r] = 0.5;   // heaviest third, or no frame gained
+            if ( (c->dF <= 0 && c->dPhi <= 0) || r >= nA - nA / 3 )    pW[r] = 0.75;   // heaviest third, or no frame gained
             else if ( r < nA / 3 )                   pW[r] = 2.0;   // lightest third
             else                                     pW[r] = 1.0;   // middle
             SumW += pW[r];
@@ -2372,25 +2393,39 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.5;   // stalled
+            if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.75;   // stalled
             else if ( r >= nA - nA / 3 )         pW[r] = 2.0;   // progressing
             else                                 pW[r] = 1.0;   // neutral
             SumW += pW[r];
         }
     }
 
-    // 3. split the total budget (Base * N) in proportion to the weights
-    for ( r = 0; r < nA; r++ )
-    {
-        c = pA[r];
-        c->Pars.nConfBudget = (int)( (double)c->nConfBase * nA * pW[r] / SumW );
-        c->Pars.nPropBudget = (int)( (double)c->nPropBase * nA * pW[r] / SumW );
-                Abc_Print( 1, "c [PURSE-ALLOC-N] round=%d po=%d eff=%.6f score=%.4f w=%.1f dF=%lld dTC=%lld dPO=%lld dPhi=%lld conf=%d prop=%d\n",
-                   iRound, c->iPo, c->Eff, c->Score, pW[r],
-                   c->dF, c->dTC, c->dPO, c->dPhi, c->Pars.nConfBudget, c->Pars.nPropBudget );
-    }
-    ABC_FREE( pA );
-    ABC_FREE( pW );
+        // 3. split the total budget (Base * N) in proportion to the weights
+        /*for ( r = 0; r < nA; r++ )
+        {
+            c = pA[r];
+            c->Pars.nConfBudget = (int)( (double)c->nConfBase * nA * pW[r] / SumW );
+            c->Pars.nPropBudget = (int)( (double)c->nPropBase * nA * pW[r] / SumW );
+        }
+        ABC_FREE( pA );
+        ABC_FREE( pW );*/
+        // Toushali: budget of solved properties is shared by the active ones
+        /*double Scale = nA > 0 ? (double)nPos / (double)nA : 1.0;
+        for ( r = 0; r < nA; r++ )
+        {
+            c = pA[r];
+            c->Pars.nConfBudget = (int)( (double)Purse_Scaled( c->nConfBase, Scale, nCapConf ) * nA * pW[r] / SumW );
+            c->Pars.nPropBudget = (int)( (double)Purse_Scaled( c->nPropBase, Scale, nCapProp ) * nA * pW[r] / SumW );
+        }*/
+        // Toushali: budget of solved properties is shared by the active ones
+        double Scale = nA > 0 ? (double)nPos / (double)nA : 1.0;
+        for ( r = 0; r < nA; r++ )
+        {
+            c = pA[r];
+            c->Pars.nConfBudget = (int)( (double)Purse_Scaled( c->nConfBase, Scale ) * nA * pW[r] / SumW );
+            c->Pars.nPropBudget = (int)( (double)Purse_Scaled( c->nPropBase, Scale ) * nA * pW[r] / SumW );
+        }
+    
 }
 
 static long long Purse_SumTC( Purse_Ctx_t ** pCtx, int nPos, int fSolved )   // -1 = all
@@ -2404,7 +2439,7 @@ static long long Purse_SumTC( Purse_Ctx_t ** pCtx, int nPos, int fSolved )   // 
 }
 int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 {
-    long long nCapConf, nCapProp;
+    //long long nCapConf, nCapProp;
     int nPos     = Saig_ManPoNum( pAig );
     abctime clkAll = Abc_Clock();
     int nRounds  = pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY;
@@ -2414,8 +2449,8 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     Purse_Ctx_t ** pSeq = ABC_ALLOC( Purse_Ctx_t *, nPos );   // current visiting order
     int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0, nSolved;
     ABC_FREE( pAig->pSeqModel );
-    nCapConf = (long long)pPars->nConfBudget * PURSE_MAX_GROWTH;
-    nCapProp = (long long)pPars->nPropBudget * PURSE_MAX_GROWTH;
+    //nCapConf = (long long)pPars->nConfBudget * PURSE_MAX_GROWTH;
+    //nCapProp = (long long)pPars->nPropBudget * PURSE_MAX_GROWTH;
     for ( i = 0; i < nPos; i++ )
     {
        pCtx[i] = Purse_CtxStart( pAig, pPars, i, timeToStop );
@@ -2463,9 +2498,6 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                 Vec_StrPush( c->vHist, Res ? 'S' : 'U' );       //safe and unsafe
                 nSolved++;
                 c->fSolved = 1;
-                Abc_Print( 1, "c [PURSE-SOLVED] po=%d res=%d round=%d total_sat_calls=%lld time=%.3f\n",
-                           c->iPo, Res, iRound, Purse_SumTC( pCtx, nPos, -1 ),
-                           1.0 * (Abc_Clock() - clkAll) / CLOCKS_PER_SEC );
                 Purse_CtxFinish( c, Res );
             }
             else   // -1: the global deadline, or a per-property stop such as -F
@@ -2484,9 +2516,9 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                 for ( k = 0; k < nPos; k++ )
                 if ( pCtx[k]->Status == PURSE_ST_ACTIVE )
                 {
-                    if ( (long long)pCtx[k]->nConfBase * 2 <= nCapConf )
+                    //if ( (long long)pCtx[k]->nConfBase * 2 <= nCapConf )
                         pCtx[k]->nConfBase *= 2;
-                    if ( (long long)pCtx[k]->nPropBase * 2 <= nCapProp )
+                    //if ( (long long)pCtx[k]->nPropBase * 2 <= nCapProp )
                         pCtx[k]->nPropBase *= 2;
                     pCtx[k]->Pars.nConfBudget = pCtx[k]->nConfBase;
                     pCtx[k]->Pars.nPropBudget = pCtx[k]->nPropBase;
@@ -2495,9 +2527,8 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             //if ( pPars->nOrderVar == 3 ) //V3
             //    Purse_Allocate( pCtx, nPos, iRound );
             if ( pPars->nOrderVar == 3 ) //V3-N
-                Purse_AllocateN( pCtx, nPos, iRound );
-            Purse_Reorder( pSeq, nPos, pPars->nOrderVar );
-            Abc_Print( 1, "c [PURSE-ORDER] after_round=%d order=", iRound );
+                                Purse_AllocateN( pCtx, nPos, iRound );
+            Purse_Reorder( pSeq, nPos, pPars->nOrderVar );  
             for ( k = 0; k < nPos; k++ )
                 if ( pSeq[k]->Status == PURSE_ST_ACTIVE )
                     Abc_Print( 1, " %d", pSeq[k]->iPo );

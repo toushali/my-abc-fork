@@ -13,7 +13,7 @@ import pandas as pd
 
 # ---- 1. Settings -----------------------------------------------------------
 DESIGN = "test-designs/bob12m16m.aig"
-B, P, T = 1000, 100000, 100
+B, P, T = 1000, 100000, 600
 RUN_ABC = True      # set to False to only re-parse existing logs
 
 # label -> (log file, extra purse flags)

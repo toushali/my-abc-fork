@@ -10,15 +10,14 @@
 import csv, glob, os, re, subprocess, time
 
 FOLDER = "test-designs"   # folder with the .aig / .aag designs
-B = 25000                 # -B  conflict budget per slice (purse)
+B = 10000                 # -B  conflict budget per slice (purse)
 P = 100000                # -P  propagation budget per slice (purse)
-T = 10                    # -T  time limit per run, in seconds
+T = 600                   # -T  time limit per run, in seconds
 
 # purse configurations: (label used in column names, extra purse flags)
 PURSE_CONFIGS = [
     ("V2",    "-V 2"),
     ("V3_E1", "-V 3 -E 1"),
-    ("V3_E2", "-V 3 -E 2"),
     ("V3_E3", "-V 3 -E 3"),
 ]
 
