@@ -1,0 +1,2 @@
+======== ABC command line "read_aiger test-designs/6s259.aig; fold; strash; purse -B 10000 -P 100000 -T 10 -V 3 -E 3"
+Warning: The last 10 outputs are interpreted as constraints.

@@ -2382,7 +2382,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         {
             c = pA[r];
             if ( (c->dF <= 0 && c->dPhi <= 0) || r >= nA - nA / 3 )    pW[r] = 0.75;   // heaviest third, or no frame gained
-            else if ( r < nA / 3 )                   pW[r] = 2.0;   // lightest third
+            else if ( r < nA / 3 )                   pW[r] = 1.5;   // lightest third
             else                                     pW[r] = 1.0;   // middle
             SumW += pW[r];
         }
@@ -2393,8 +2393,8 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.75;   // stalled
-            else if ( r >= nA - nA / 3 )         pW[r] = 2.0;   // progressing
+            if ( c->Eff <= 0.0 || r < nA / 3 )   pW[r] = 0.5;   // stalled
+            else if ( r >= nA - nA / 3 )         pW[r] = 2;   // progressing
             else                                 pW[r] = 1.0;   // neutral
             SumW += pW[r];
         }
@@ -2425,6 +2425,8 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
             c->Pars.nConfBudget = (int)( (double)Purse_Scaled( c->nConfBase, Scale ) * nA * pW[r] / SumW );
             c->Pars.nPropBudget = (int)( (double)Purse_Scaled( c->nPropBase, Scale ) * nA * pW[r] / SumW );
         }
+        ABC_FREE( pA );
+        ABC_FREE( pW );
     
 }
 
