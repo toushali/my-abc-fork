@@ -2598,7 +2598,7 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             pPars->fSolveAll ?    "yes" : "no" );
     }
     ABC_FREE( pAig->pSeqModel );
-    p = Pdr_ManStart( pAig, pPars, NULL );
+    
     clkSolve = Abc_Clock();
 
     // PURSE: slicing is on if any of -S, -B, -P is given
@@ -2606,6 +2606,7 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     // -R = max number of slices; without -R, slice until a verdict or -T
     if ( pPars->iOutput < 0 && fSlicing )
        return Pdr_ManPurseSched( pAig, pPars );
+    p = Pdr_ManStart( pAig, pPars, NULL );
     nSlices  = fSlicing ? (pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY) : 1;
     for ( iSlice = 1; iSlice <= nSlices; iSlice++ )
     {
