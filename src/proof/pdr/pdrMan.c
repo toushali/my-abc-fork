@@ -245,6 +245,28 @@ Vec_Int_t * Pdr_ManDeriveFlopPriorities2( Gia_Man_t * p, int fMuxCtrls )
   SeeAlso     []
 
 ***********************************************************************/
+void Pdr_ManPurseFreeInvariants(Pdr_Man_t * p)
+{
+    Pdr_Set_t * pCube;
+    int i;
+
+    if (p->vPurseHelpers == NULL)
+        return;
+
+    Vec_PtrForEachEntry(
+        Pdr_Set_t *,
+        p->vPurseHelpers,
+        pCube, i)
+    {
+        Pdr_SetDeref(pCube);
+    }
+
+    Vec_PtrFree(p->vPurseHelpers);
+
+    p->vPurseHelpers = NULL;
+    p->nPurseHelperClauses = 0;
+}
+
 Pdr_Man_t * Pdr_ManStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, Vec_Int_t * vPrioInit )
 {
     Pdr_Man_t * p;
@@ -253,8 +275,12 @@ Pdr_Man_t * Pdr_ManStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, Vec_Int_t * vPrio
     p->pAig     = pAig;
     p->pGia     = (pPars->fFlopPrio || p->pPars->fNewXSim || p->pPars->fUseAbs) ? Gia_ManFromAigSimple(pAig) : NULL;
     p->vSolvers = Vec_PtrAlloc( 0 );
+    p->vPurseHelpers = Vec_PtrAlloc(0);
+    p->nPurseHelperClauses = 0;
     p->vClauses = Vec_VecAlloc( 0 );
     p->pQueue   = NULL;
+    p->vPurseHelpers = NULL;
+    p->nPurseHelperClauses = 0;
     p->pOrder   = ABC_ALLOC( int, Aig_ManRegNum(pAig) );
     p->vActVars = Vec_IntAlloc( 256 );
     if ( !p->pPars->fMonoCnf )
@@ -354,6 +380,7 @@ void Pdr_ManStop( Pdr_Man_t * p )
 //    Abc_Print( 1, "SS =%6d. SU =%6d. US =%6d. UU =%6d.\n", p->nCasesSS, p->nCasesSU, p->nCasesUS, p->nCasesUU );
     Vec_PtrForEachEntry( sat_solver *, p->vSolvers, pSat, i )
         sat_solver_delete( pSat );
+    Pdr_ManPurseFreeInvariants(p);
     Vec_PtrFree( p->vSolvers );
     if ( p->vGipSolvers )
     {

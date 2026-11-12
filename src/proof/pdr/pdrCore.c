@@ -66,6 +66,7 @@ void Pdr_ManSetDefaultParams( Pdr_Par_t * pPars )
     pPars->nConfBudget    =       0;  // Toushali PURSE: total conflict budget (0 = no limit)
     pPars->nPropBudget    =       0;  // Toushali PURSE: total propagation budget (0 = no limit)
     pPars->nEffFormula  = 1;      // formula 1 by default (current behaviour)
+    pPars->nFallbackRounds = 0;   //fallback disabled
     pPars->nRestLimit     =       0;  // limit on the number of proof-obligations
     pPars->nRandomSeed   = 91648253;  // value to seed the SAT solver with
     pPars->fTwoRounds     =       0;  // use two rounds for generalization
@@ -2018,6 +2019,13 @@ int Pdr_ManSolve( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 
 #define PURSE_ST_ACTIVE  2    // still scheduled (1 = SAFE, 0 = UNSAFE, -1 = undecided)
 
+typedef struct PurseHelper_t_
+{
+    int po;
+    int clauses;
+    Vec_Int_t * vInv;
+} PurseHelper_t;
+
 typedef struct Purse_Ctx_t_ Purse_Ctx_t;
 struct Purse_Ctx_t_
 {
@@ -2374,7 +2382,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
     }
 
     // 2. split into three classes and give each property a weight
-    if ( nA > 0 && pA[0]->Pars.nEffFormula == 3 )      // -E 3: split by Score
+    if ( nA > 0 && (pA[0]->Pars.nEffFormula == 3 || pA[0]->Pars.nEffFormula == 4) )      // -E 3: split by Score
     {
         Purse_ComputeScores( pCtx, nPos );
         qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpScore );   // lightest first
@@ -2442,6 +2450,8 @@ static long long Purse_SumTC( Purse_Ctx_t ** pCtx, int nPos, int fSolved )   // 
 int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 {
     //long long nCapConf, nCapProp;
+    Vec_Ptr_t * vHelpers = Vec_PtrAlloc(16);
+    PurseHelper_t * h;
     int nPos     = Saig_ManPoNum( pAig );
     abctime clkAll = Abc_Clock();
     int nRounds  = pPars->nMaxSlices > 0 ? pPars->nMaxSlices : ABC_INFINITY;
@@ -2450,6 +2460,14 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     Purse_Ctx_t ** pCtx = ABC_CALLOC( Purse_Ctx_t *, nPos );
     Purse_Ctx_t ** pSeq = ABC_ALLOC( Purse_Ctx_t *, nPos );   // current visiting order
     int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0, nSolved;
+    // Dynamic scheduler mode (2 = V2, 3 = V3).
+    int nActiveVariant = pPars->nOrderVar;
+
+    // Consecutive rounds without a SAFE/UNSAFE result.
+    int nNoVerdictRounds = 0;
+
+    // Only E4 enables the automatic fallback.
+    int fAutoFallback =(pPars->nOrderVar == 3 && pPars->nEffFormula == 4);
     ABC_FREE( pAig->pSeqModel );
     //nCapConf = (long long)pPars->nConfBudget * PURSE_MAX_GROWTH;
     //nCapProp = (long long)pPars->nPropBudget * PURSE_MAX_GROWTH;
@@ -2500,6 +2518,39 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                 Vec_StrPush( c->vHist, Res ? 'S' : 'U' );       //safe and unsafe
                 nSolved++;
                 c->fSolved = 1;
+                if (Res == 1)
+                {
+                    Vec_Int_t * vInv = Pdr_ManDeriveInfinityClauses(c->pMan, 0);
+
+                    if (vInv != NULL)
+                    {
+                        PurseHelper_t * h = ABC_CALLOC(PurseHelper_t, 1);
+
+                        h->po = c->iPo;
+                        h->vInv = vInv;
+                        h->clauses = Vec_IntEntry(vInv, 0);
+
+                        Vec_PtrPush(vHelpers, h);
+
+                        int t;
+
+                        for (t = 0; t < nPos; t++)
+                        {
+                            Purse_Ctx_t * target = pCtx[t];
+
+                            if (target == c)
+                                continue;
+
+                            if (target->Status != PURSE_ST_ACTIVE)
+                                continue;
+
+                            if (target->pMan == NULL)
+                                continue;
+
+                            Pdr_ManPurseImportInvariant(target->pMan, h->vInv);
+                        }
+                    }
+                }
                 Purse_CtxFinish( c, Res );
             }
             else   // -1: the global deadline, or a per-property stop such as -F
@@ -2511,6 +2562,58 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                     Purse_CtxFinish( c, -1 );        // dropped, never scheduled again
             }
         }
+        /*
+        * PURSE E4: switch scheduling policies at round boundaries.
+        *
+        * V3 -> V2: n consecutive rounds without SAFE/UNSAFE.
+        * V2 -> V3: at least one SAFE/UNSAFE in a V2 round.
+        *
+        * Existing PDR managers remain alive.
+        */
+        if ( fAutoFallback && nActive > 0 && !fTimeOut )
+        {
+            if ( nActiveVariant == 3 )
+            {
+                if ( nSolved > 0 )
+                {
+                    // A property was completed; reset stall counter.
+                    nNoVerdictRounds = 0;
+                }
+                else
+                {
+                    nNoVerdictRounds++;
+
+                    Abc_Print( 1, "c [PURSE-FALLBACK] round=%d " "mode=V3 stalled=%d threshold=%d\n", iRound, nNoVerdictRounds, pPars->nFallbackRounds );
+
+                    if ( nNoVerdictRounds >= pPars->nFallbackRounds )
+                    {
+                        nActiveVariant = 2;
+                        nNoVerdictRounds = 0;
+
+                        Abc_Print( 1,
+                            "c [PURSE-SWITCH] round=%d "
+                            "from=V3-E3 to=V2 "
+                            "reason=no_safe_or_unsafe\n",
+                            iRound );
+                    }
+                }
+            }
+            else if ( nActiveVariant == 2 )
+            {
+                if ( nSolved > 0 )
+                {
+                    nActiveVariant = 3;
+                    nNoVerdictRounds = 0;
+
+                    Abc_Print( 1,
+                        "c [PURSE-SWITCH] round=%d "
+                        "from=V2 to=V3-E3 "
+                        "reason=property_solved count=%d\n",
+                        iRound, nSolved );
+                }
+            }
+        }
+
         if ( pPars->nOrderVar > 0 && nActive > 0 )
         {
             if ( nSolved == 0 )              // nothing finished this round: double the budgets V1,V2,V3
@@ -2528,9 +2631,16 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             }
             //if ( pPars->nOrderVar == 3 ) //V3
             //    Purse_Allocate( pCtx, nPos, iRound );
-            if ( pPars->nOrderVar == 3 ) //V3-N
-                                Purse_AllocateN( pCtx, nPos, iRound );
-            Purse_Reorder( pSeq, nPos, pPars->nOrderVar );  
+            
+            // V3: score-based ordering plus adaptive budget allocation.
+            // V2: V2 ordering without V3 budget redistribution.
+            if ( nActiveVariant == 3 )
+                Purse_AllocateN( pCtx, nPos, iRound );
+
+            Purse_Reorder( pSeq, nPos, nActiveVariant );
+
+            Abc_Print(1, "c [PURSE-MODE] after_round=%d " "next_variant=V%d requested_E=%d effective_E=%d\n", iRound, nActiveVariant, pPars->nEffFormula, nActiveVariant == 3 ? (pPars->nEffFormula == 4 ? 3 : pPars->nEffFormula) : 0);
+            
             for ( k = 0; k < nPos; k++ )
                 if ( pSeq[k]->Status == PURSE_ST_ACTIVE )
                     Abc_Print( 1, " %d", pSeq[k]->iPo );
@@ -2573,6 +2683,14 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     }
     ABC_FREE( pCtx );
     ABC_FREE( pSeq );
+
+    Vec_PtrForEachEntry(PurseHelper_t *, vHelpers, h, i)
+    {
+        Vec_IntFree(h->vInv);
+        ABC_FREE(h);
+    }
+
+    Vec_PtrFree(vHelpers);
     return nProved == nPos ? 1 : -1;
 }
 int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )

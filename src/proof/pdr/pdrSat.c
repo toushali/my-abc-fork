@@ -184,7 +184,11 @@ sat_solver * Pdr_ManCreateSolver( Pdr_Man_t * p, int k )
     }
     // add property cone
     Saig_ManForEachPo( p->pAig, pObj, i )
-        Pdr_ObjSatVar( p, k, 1, pObj );
+    Pdr_ObjSatVar( p, k, 1, pObj );
+
+    if (k >= 1)
+        Pdr_ManPurseInstallHelpers(p, k);
+
     return pSat;
 }
 
@@ -229,6 +233,9 @@ sat_solver * Pdr_ManFetchSolver( Pdr_Man_t * p, int k )
     Vec_VecForEachLevelStart( p->vClauses, vArrayK, i, k )
         Vec_PtrForEachEntry( Pdr_Set_t *, vArrayK, pCube, j )
             Pdr_ManSolverAddClause( p, k, pCube );
+
+    if (k >= 1)
+    Pdr_ManPurseInstallHelpers(p, k);
     return pSat;
 }
 
@@ -358,6 +365,111 @@ void Pdr_ManSolverAddClause( Pdr_Man_t * p, int k, Pdr_Set_t * pCube )
     RetValue = sat_solver_addclause( pSat, Vec_IntArray(vLits), Vec_IntArray(vLits) + Vec_IntSize(vLits) );
     assert( RetValue == 1 );
     sat_solver_compress( pSat );
+}
+
+void Pdr_ManPurseInstallHelpers(Pdr_Man_t * p, int k)
+{
+    Pdr_Set_t * pCube;
+    int i;
+
+    if (k < 1 || p->vPurseHelpers == NULL)
+        return;
+
+    Vec_PtrForEachEntry(Pdr_Set_t *, p->vPurseHelpers, pCube, i)
+    {
+        Pdr_ManSolverAddClause(p, k, pCube);
+    }
+}
+
+int Pdr_ManPurseImportInvariant(Pdr_Man_t * p, Vec_Int_t * vInv)
+{
+    int nSize, nClauses, nRegs;
+    int i, j, k, Pos, nLits;
+    int nImported = 0;
+    Vec_Int_t * vLits;
+    Vec_Int_t * vEmpty;
+    Pdr_Set_t * pCube;
+
+    if (p == NULL || vInv == NULL)
+        return 0;
+
+    nSize = Vec_IntSize(vInv);
+
+    if (nSize < 2)
+        return 0;
+
+    nClauses = Vec_IntEntry(vInv, 0);
+    nRegs = Vec_IntEntry(vInv, nSize - 1);
+
+    if (nClauses < 0 || nRegs != Aig_ManRegNum(p->pAig))
+        return 0;
+
+    /*
+     * First pass: validate the complete serialized
+     * invariant before modifying any SAT solver.
+     */
+    Pos = 1;
+
+    for (i = 0; i < nClauses; i++)
+    {
+        if (Pos >= nSize - 1)
+            return 0;
+
+        nLits = Vec_IntEntry(vInv, Pos++);
+
+        if (nLits < 0 || nLits > nSize - 1 - Pos)
+            return 0;
+
+        for (j = 0; j < nLits; j++)
+        {
+            int Lit = Vec_IntEntry(vInv, Pos + j);
+
+            if (Lit < 0 ||
+                Abc_Lit2Var(Lit) >= nRegs)
+                return 0;
+        }
+
+        Pos += nLits;
+    }
+
+    if (Pos != nSize - 1)
+        return 0;
+
+    if (p->vPurseHelpers == NULL)
+        p->vPurseHelpers = Vec_PtrAlloc(16);
+
+    vLits = Vec_IntAlloc(16);
+    vEmpty = Vec_IntAlloc(0);
+
+    /*
+     * Second pass: import the validated cubes.
+     */
+    Pos = 1;
+
+    for (i = 0; i < nClauses; i++)
+    {
+        nLits = Vec_IntEntry(vInv, Pos++);
+
+        Vec_IntClear(vLits);
+
+        for (j = 0; j < nLits; j++)
+            Vec_IntPush(vLits, Vec_IntEntry(vInv, Pos++));
+
+        pCube = Pdr_SetCreate(vLits, vEmpty);
+
+        Vec_PtrPush(p->vPurseHelpers, pCube);
+
+        for (k = 1; k < Vec_PtrSize(p->vSolvers); k++)
+            Pdr_ManSolverAddClause(p, k, pCube);
+
+        p->nPurseHelperClauses++;
+        nImported++;
+    }
+
+    Vec_IntFree(vLits);
+    Vec_IntFree(vEmpty);
+
+    return nImported;
 }
 
 /**Function*************************************************************

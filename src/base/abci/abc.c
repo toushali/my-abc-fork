@@ -74,6 +74,9 @@
 
 #ifndef _WIN32
 #include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
 #endif
 
 ABC_NAMESPACE_IMPL_START
@@ -33473,9 +33476,39 @@ int Abc_CommandPdr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 't':
             pPars->fUseAbs ^= 1;
             break;
+        
         case 'k':
+        {
+            // -k n : fallback threshold for PURSE V3 E4
+            // -k   : legacy simplified-refinement toggle
+
+            if ( globalUtilOptind < argc )
+            {
+                char * pEnd;
+                long nValue;
+
+                errno = 0;
+                nValue = strtol(argv[globalUtilOptind], &pEnd, 10 );
+
+                if ( pEnd != argv[globalUtilOptind] && *pEnd == '\0' )
+                {
+                    if ( errno == ERANGE || nValue <= 0 || nValue > INT_MAX )
+                    {
+                        Abc_Print( -1, "Switch -k requires a positive integer.\n" );
+                        goto usage;
+                    }
+
+                    pPars->nFallbackRounds = (int)nValue;
+                    globalUtilOptind++;
+                    break;
+                }
+            }
+
+            // Existing -k behavior remains available.
             pPars->fUseSimpleRef ^= 1;
             break;
+        }
+
         case 's':
             pPars->fUseGipSat ^= 1;
             break;
@@ -33772,12 +33805,12 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'E':
             if ( globalUtilOptind >= argc )
             {
-                Abc_Print( -1, "Command line switch \"-E\" should be followed by 1 or 2.\n" );
+                Abc_Print( -1, "Command line switch \"-E\" should be followed by 1, 2, 3 or 4.\n" );
                 goto usage;
             }
             pPars->nEffFormula = atoi( argv[globalUtilOptind] );
             globalUtilOptind++;
-            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 3 )
+            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 4 )
                 goto usage;
             break;
         case 'a':
@@ -33834,9 +33867,42 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 't':
             pPars->fUseAbs ^= 1;
             break;
+        
         case 'k':
+        {
+            char * pEnd = NULL;
+            long nValue = 0;
+
+            // -k n specifies consecutive no-verdict rounds.
+            if ( globalUtilOptind < argc )
+            {
+                errno = 0;
+                nValue = strtol(
+                    argv[globalUtilOptind], &pEnd, 10 );
+
+                if ( pEnd != argv[globalUtilOptind] &&
+                    *pEnd == '\0' )
+                {
+                    if ( errno == ERANGE ||
+                        nValue <= 0 ||
+                        nValue > INT_MAX )
+                    {
+                        Abc_Print( -1,
+                            "-k requires a positive integer.\n" );
+                        goto usage;
+                    }
+
+                    pPars->nFallbackRounds = (int)nValue;
+                    globalUtilOptind++;
+                    break;
+                }
+            }
+
+            // Preserve legacy -k without an integer.
             pPars->fUseSimpleRef ^= 1;
             break;
+        }
+
         case 's':
             pPars->fUseGipSat ^= 1;
             break;
@@ -33857,6 +33923,25 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
+
+    /* PURSE V3 E4 fallback validation */
+    Abc_Print(1, "c [PURSE-ARGS] V=%d E=%d k=%d " "output=%d S=%d B=%lld P=%lld\n", pPars->nOrderVar, pPars->nEffFormula, pPars->nFallbackRounds, pPars->iOutput, pPars->nSliceFrames, (long long)pPars->nConfBudget, (long long)pPars->nPropBudget);
+    if ( pPars->nEffFormula == 4 )
+    {
+        if ( pPars->nOrderVar != 3 || pPars->nFallbackRounds <= 0 || pPars->iOutput >= 0 ||
+            (pPars->nSliceFrames == 0 && pPars->nConfBudget == 0 && pPars->nPropBudget == 0) )
+        {
+            Abc_Print( -1, "-E 4 requires -V 3, -k n (n > 0), " "multi-output mode, and -S, -B or -P.\n" );
+            goto usage;
+        }
+    }
+    else if ( pPars->nFallbackRounds > 0 )
+    {
+        Abc_Print( -1,
+            "-k n is only valid with -V 3 -E 4.\n" );
+        goto usage;
+    }
+
     if ( pNtk == NULL )
     {
         Abc_Print( -2, "There is no current network.\n");
@@ -33929,7 +34014,7 @@ usage:
     Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
     Abc_Print( -2, "\t-P num : SAT propagations per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
     Abc_Print( -2, "\t-O num : zero-based index of the only output to solve (-1 = all) [default = %d]\n", pPars->iOutput );
-    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps), 3 = 5-metric score [default = %d]\n", pPars->nEffFormula );
+    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps), 3 = 5-metric score [default = %d]\n" "4 = score with V2 fallback [default = %d]\n", pPars->nEffFormula );
     Abc_Print( -2, "\t-a     : toggle solving all outputs even if one of them is SAT [default = %s]\n",      pPars->fSolveAll? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle storing CEXes when solving all outputs [default = %s]\n",              pPars->fStoreCex? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using more effort in generalization [default = %s]\n",                 pPars->fTwoRounds? "yes": "no" );
@@ -33949,6 +34034,7 @@ usage:
     Abc_Print( -2, "\t-c     : * toggle handling CTGs in \'down\' [default = %s]\n",                           pPars->fCtgs? "yes": "no" );
     Abc_Print( -2, "\t-t     : toggle using abstraction [default = %s]\n",                                   pPars->fUseAbs? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle using simplified refinement [default = %s]\n",                         pPars->fUseSimpleRef? "yes": "no" );
+    Abc_Print( -2, "\t-k num : with -E 4, fallback to V2 after num " "consecutive rounds without SAFE/UNSAFE\n" );
     Abc_Print( -2, "\t-s     : toggle using the GipSAT solver (ported from rIC3); -f is recommended [default = %s]\n", pPars->fUseGipSat? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing optimization summary [default = %s]\n",                       pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing detailed stats default = %s]\n",                              pPars->fVeryVerbose? "yes": "no" );

@@ -123,6 +123,10 @@ struct Pdr_Man_t_
     Vec_Int_t * vAbsFlops; // flops currently used
     Vec_Int_t * vMapFf2Ppi;
     Vec_Int_t * vMapPpi2Ff;
+
+    Vec_Ptr_t * vPurseHelpers; //Toushali Helper
+    int nPurseHelperClauses; //Toushali Helper
+
     int         nCexes;
     int         nCexesTotal;
     // GipSAT (fUseGipSat): shared static context + one persistent solver per frame
@@ -224,11 +228,16 @@ extern void            Pdr_ManReportInvariant( Pdr_Man_t * p );
 extern void            Pdr_ManVerifyInvariant( Pdr_Man_t * p );
 extern Vec_Int_t *     Pdr_ManDeriveInfinityClauses( Pdr_Man_t * p, int fReduce );
 /*=== pdrMan.c ==========================================================*/
+extern void Pdr_ManPurseFreeInvariants(Pdr_Man_t * p);
+
 extern Pdr_Man_t *     Pdr_ManStart( Aig_Man_t * pAig, Pdr_Par_t * pPars, Vec_Int_t * vPrioInit );
 extern void            Pdr_ManStop( Pdr_Man_t * p );
 extern Abc_Cex_t *     Pdr_ManDeriveCex( Pdr_Man_t * p );
 extern Abc_Cex_t *     Pdr_ManDeriveCexAbs( Pdr_Man_t * p );
 /*=== pdrSat.c ==========================================================*/
+extern int Pdr_ManPurseImportInvariant(Pdr_Man_t * p, Vec_Int_t * vInv);
+extern void Pdr_ManPurseInstallHelpers(Pdr_Man_t * p, int k);
+
 extern sat_solver *    Pdr_ManCreateSolver( Pdr_Man_t * p, int k );
 extern sat_solver *    Pdr_ManFetchSolver( Pdr_Man_t * p, int k );
 extern void            Pdr_ManSetPropertyOutput( Pdr_Man_t * p, int k );
