@@ -1,0 +1,4 @@
+======== ABC command line "read_aiger test-designs/6s281.aig; fold; strash; purse -B 10000 -P 100000 -T 10 -V 3 -E 3"
+Warning: The network has no constraints.
+
+[RUNNER] Process exceeded external wall-clock timeout.

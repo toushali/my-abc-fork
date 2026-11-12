@@ -1,0 +1,3 @@
+======== ABC command line "read_aiger test-designs/6s259.aig; fold; strash; print_stats"
+Warning: The last 10 outputs are interpreted as constraints.
+[1;37mtest-designs/6s259            :[0m i/o = 1237/  244  lat =42847  and = 728455  lev =153

@@ -1,0 +1,3 @@
+======== ABC command line "read_aiger test-designs/6s281.aig; fold; strash; print_stats"
+Warning: The network has no constraints.
+[1;37mtest-designs/6s281            :[0m i/o =91099/   90  lat =177235  and =2076497  lev =121

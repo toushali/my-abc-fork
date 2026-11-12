@@ -1,0 +1,7 @@
+======== ABC command line "read_aiger test-designs/6s276.aig; fold; strash; pdr -T 10 -a -v"
+Warning: The network has no constraints.
+VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
+Frame Clauses                                                     Max Queue Flops Cex      Time
+  1 : 0 1142                                                              1  1142      1.44 sec  CEX =   0
+
+[RUNNER] Process exceeded external wall-clock timeout.
