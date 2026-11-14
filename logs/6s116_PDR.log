@@ -1,0 +1,39 @@
+======== ABC command line "read_aiger test-designs/6s116.aig; fold; strash; pdr -T 10 -a -v"
+Warning: The network has no constraints.
+VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
+Frame Clauses                                                     Max Queue Flops Cex      Time
+  1 : 0 5                                                                 1     5      0.04 sec  CEX =   0
+  2 : 0 20 41                                                             7    62      0.08 sec  CEX =   0
+  3 : 0 8 9 34                                                            0    62      0.08 sec  CEX =   0
+Output  0 was asserted in frame  4 ( 4) (solved  1 out of 17 outputs).
+  4 : 0 39 19 4 71                                                       21   136      0.25 sec  CEX =   1
+Output  8 was asserted in frame  5 ( 5) (solved  2 out of 17 outputs).
+  5 : 0 72 49 39 13 158                                                  30   268      0.45 sec  CEX =   2
+  6 : 0 18 23 19 20 11 176                                                1   268      0.47 sec  CEX =   2
+Output  9 was asserted in frame  7 ( 7) (solved  3 out of 17 outputs).
+  7 : 0 22 25 22 21 30 58 248                                            21   326      0.69 sec  CEX =   3
+Output 10 was asserted in frame  8 ( 8) (solved  4 out of 17 outputs).
+  8 : 0 19 27 24 24 27 46 32 228                                         20   336      0.77 sec  CEX =   4
+Output 11 was asserted in frame  9 ( 9) (solved  5 out of 17 outputs).
+  9 : 0 15 23 22 27 41 62 81 105 432                                     25   386      1.82 sec  CEX =   5
+Output 12 was asserted in frame 10 (10) (solved  6 out of 17 outputs).
+ 10 : 0 17 20 24 33 47 74 125 104 79 430                                 92   403      2.45 sec  CEX =   6
+Output 13 was asserted in frame 11 (11) (solved  7 out of 17 outputs).
+ 11 : 0 13 15 16 15 19 20 20 26 62 77 356                                14   403      2.56 sec  CEX =   7
+Output 14 was asserted in frame 12 (12) (solved  8 out of 17 outputs).
+ 12 : 0 13 15 16 15 19 20 20 25 62 76 43 319                             13   403      2.61 sec  CEX =   8
+ 13 : 0 14 22 32 26 39 58 44 74 152 247 389 521 973                     108   564     10.00 sec  CEX =   8
+Reached timeout (10 seconds) in frame 13.
+Block =   29  Oblig =  6457  Clause =  3219  Call = 35322 (sat=61.2%)  Cex =   0  Start = 111
+SAT solving =     5.39 sec ( 53.85 %)
+  unsat     =     0.39 sec (  3.86 %)
+  sat       =     5.01 sec ( 49.99 %)
+Generalize  =     7.03 sec ( 70.15 %)
+Push clause =     0.30 sec (  2.97 %)
+Ternary sim =     2.05 sec ( 20.48 %)
+Containment =     0.83 sec (  8.25 %)
+CNF compute =     0.40 sec (  4.00 %)
+Refinement  =     0.00 sec (  0.00 %)
+TOTAL       =    10.02 sec (100.00 %)
+Properties:  All = 17. Proved = 0. Disproved = 8. Undecided = 9.   Time =    10.04 sec
+[RUNNER-RAM] max_rss_kb=64120

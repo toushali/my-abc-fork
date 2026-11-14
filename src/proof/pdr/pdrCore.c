@@ -2390,7 +2390,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         {
             c = pA[r];
             if ( (c->dF <= 0 && c->dPhi <= 0) || r >= nA - nA / 3 )    pW[r] = 0.75;   // heaviest third, or no frame gained
-            else if ( r < nA / 3 )                   pW[r] = 1.5;   // lightest third
+            else if ( r < nA / 3 )                   pW[r] = 2;   // lightest third
             else                                     pW[r] = 1.0;   // middle
             SumW += pW[r];
         }

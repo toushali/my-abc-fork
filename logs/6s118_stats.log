@@ -1,0 +1,4 @@
+======== ABC command line "read_aiger test-designs/6s118.aig; fold; strash; print_stats"
+Warning: The last 2 outputs are interpreted as constraints.
+[1;37mtest-designs/6s118            :[0m i/o =  452/  100  lat =13067  and = 313873  lev =654
+[RUNNER-RAM] max_rss_kb=124256

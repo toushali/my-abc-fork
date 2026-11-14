@@ -1,0 +1,4 @@
+======== ABC command line "read_aiger test-designs/6s116.aig; fold; strash; print_stats"
+Warning: The network has no constraints.
+[1;37mtest-designs/6s116            :[0m i/o = 4912/   17  lat = 4922  and =  22649  lev = 29
+[RUNNER-RAM] max_rss_kb=25720

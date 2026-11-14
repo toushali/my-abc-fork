@@ -1,0 +1,5 @@
+======== ABC command line "read_aiger test-designs/6s118.aig; fold; strash; pdr -T 10 -a -v"
+Warning: The last 2 outputs are interpreted as constraints.
+VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
+Frame Clauses                                                     Max Queue Flops Cex      Time
+  1 : 0 200                                                               1   200      5.02 sec  CEX =   0

@@ -1,0 +1,206 @@
+======== ABC command line "read_aiger test-designs/6s118.aig; fold; strash; purse -B 10000 -P 100000 -T 10 -V 2"
+Warning: The last 2 outputs are interpreted as constraints.
+c [PURSE-ARGS] V=2 E=1 k=0 output=-1 S=0 B=10000 P=100000
+c [PURSE-TOTAL] variant=2 total_sat_calls=0 undecided_sat_calls=0 time=48.696
+c [PURSE] po=0 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=0 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=1 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=1 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=2 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=2 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=3 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=3 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=4 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=4 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=5 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=5 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=6 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=6 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=7 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=7 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=8 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=8 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=9 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=9 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=10 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=10 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=11 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=11 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=12 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=12 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=13 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=13 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=14 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=14 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=15 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=15 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=16 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=16 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=17 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=17 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=18 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=18 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=19 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=19 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=20 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=20 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=21 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=21 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=22 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=22 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=23 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=23 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=24 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=24 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=25 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=25 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=26 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=26 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=27 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=27 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=28 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=28 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=29 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=29 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=30 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=30 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=31 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=31 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=32 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=32 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=33 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=33 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=34 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=34 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=35 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=35 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=36 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=36 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=37 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=37 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=38 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=38 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=39 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=39 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=40 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=40 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=41 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=41 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=42 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=42 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=43 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=43 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=44 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=44 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=45 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=45 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=46 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=46 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=47 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=47 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=48 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=48 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=49 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=49 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=50 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=50 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=51 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=51 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=52 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=52 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=53 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=53 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=54 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=54 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=55 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=55 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=56 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=56 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=57 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=57 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=58 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=58 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=59 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=59 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=60 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=60 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=61 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=61 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=62 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=62 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=63 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=63 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=64 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=64 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=65 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=65 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=66 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=66 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=67 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=67 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=68 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=68 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=69 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=69 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=70 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=70 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=71 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=71 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=72 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=72 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=73 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=73 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=74 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=74 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=75 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=75 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=76 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=76 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=77 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=77 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=78 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=78 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=79 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=79 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=80 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=80 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=81 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=81 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=82 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=82 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=83 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=83 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=84 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=84 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=85 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=85 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=86 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=86 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=87 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=87 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=88 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=88 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=89 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=89 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=90 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=90 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=91 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=91 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=92 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=92 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=93 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=93 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=94 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=94 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=95 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=95 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=96 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=96 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=97 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=97 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=98 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=98 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+c [PURSE] po=99 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
+c [PURSE-SUMMARY] po=99 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
+Properties:  All = 100. Proved = 0. Disproved = 0. Undecided = 100.   Time =    57.89 sec
+[RUNNER-RAM] max_rss_kb=3493248

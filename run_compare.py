@@ -22,7 +22,7 @@ from pathlib import Path
 FOLDER = "test-designs"
 B = 10000        # PURSE conflict budget per slice
 P = 100000       # PURSE propagation budget per slice
-T = 10         # seconds for each solver run
+T = 10           # seconds for each solver run
 
 # All commands include: read_aiger; fold; strash
 # PDR uses -a to solve all properties and -v to print the manager's SAT call count.
@@ -55,6 +55,9 @@ ABC_TIME_RE = re.compile(
     r"Properties:.*?\bTime\s*=\s*([\d.]+)\s*sec", re.IGNORECASE
 )
 
+# GNU time reports the maximum resident set size in KiB for this ABC process.
+PEAK_RAM_RE = re.compile(r"\[RUNNER-RAM\]\s+max_rss_kb=(\d+)")
+
 
 def last(regex, text):
     matches = list(regex.finditer(text))
@@ -67,7 +70,8 @@ def run_abc(command, log_path, timeout=None):
     try:
         with open(log_path, "w", encoding="utf-8", errors="replace") as log:
             result = subprocess.run(
-                ["./abc", "-c", command],
+                ["/usr/bin/time", "-f", "[RUNNER-RAM] max_rss_kb=%M",
+                 "./abc", "-c", command],
                 stdout=log, stderr=subprocess.STDOUT, timeout=timeout,
                 check=False,
             )
@@ -104,6 +108,7 @@ def run_solver(design, name, label, tool, flags):
         if state == "OK" or state == "NO_SUMMARY":
             state = "ABC_ERROR"
 
+    ram = last(PEAK_RAM_RE, output)
     result = {
         "status": state,
         "proved": props[1] if props else "",
@@ -115,6 +120,7 @@ def run_solver(design, name, label, tool, flags):
         "rounds": "",
         "time": "",          # ABC reported time (if available)
         "wall_time": f"{wall:.3f}",  # comparable wall time for every mode
+        "peak_ram_mb": f"{int(ram.group(1)) / 1024:.2f}" if ram else "",
     }
 
     if tool == "purse":
@@ -126,7 +132,7 @@ def run_solver(design, name, label, tool, flags):
         summaries = PURSE_SUMMARY_RE.findall(output)
         if summaries:
             result["proved_sat"] = sum(int(calls) for verdict, calls, _ in summaries
-                                       if verdict == "SAFE")
+                                      if verdict == "SAFE")
             result["rounds"] = max(len(history) for _, _, history in summaries)
     else:
         # 'pdr -a -v' writes a single aggregate manager line:
@@ -161,7 +167,7 @@ def main():
     columns = ["Design", "PO", "AND", "Proved", "Disproved", "Undecided"]
     for group in (
         "Status", "Total_SAT", "Undecided_SAT", "Proved_SAT",
-        "Rounds", "Time", "Wall_Time",
+        "Rounds", "Time", "Wall_Time", "Peak_RAM_MB",
     ):
         columns.extend(f"{group}_{label}" for label in labels)
 
@@ -214,6 +220,7 @@ def main():
                 ("rounds", "Rounds"),
                 ("time", "Time"),
                 ("wall_time", "Wall_Time"),
+                ("peak_ram_mb", "Peak_RAM_MB"),
             ):
                 for label in labels:
                     row[f"{group}_{label}"] = results[label][key]
