@@ -2,17 +2,18 @@
 Warning: The network has no constraints.
 VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
 Frame Clauses                                                     Max Queue Flops Cex      Time
-  1 : 0 8904                                                              1    23     10.00 sec  CEX =   0
+  1 : 0 8255                                                              1    23     10.00 sec  CEX =   0
 Reached timeout (10 seconds) in frame 1.
-Block = 8905  Oblig =  8905  Clause =  8904  Call =139506 (sat=84.7%)  Cex =   0  Start = 435
-SAT solving =     6.17 sec ( 61.66 %)
-  unsat     =     0.30 sec (  2.96 %)
-  sat       =     5.87 sec ( 58.70 %)
-Generalize  =     3.34 sec ( 33.37 %)
+Block = 8256  Oblig =  8256  Clause =  8255  Call =128345 (sat=84.6%)  Cex =   0  Start = 400
+SAT solving =     6.11 sec ( 61.04 %)
+  unsat     =     0.28 sec (  2.80 %)
+  sat       =     5.83 sec ( 58.24 %)
+Generalize  =     3.19 sec ( 31.85 %)
 Push clause =     0.00 sec (  0.00 %)
-Ternary sim =     0.46 sec (  4.58 %)
-Containment =     0.24 sec (  2.44 %)
-CNF compute =     0.36 sec (  3.59 %)
+Ternary sim =     0.46 sec (  4.64 %)
+Containment =     0.27 sec (  2.65 %)
+CNF compute =     0.33 sec (  3.34 %)
 Refinement  =     0.00 sec (  0.00 %)
 TOTAL       =    10.01 sec (100.00 %)
 Properties:  All = 32. Proved = 0. Disproved = 0. Undecided = 32.   Time =    10.01 sec
+[RUNNER-RAM] max_rss_kb=31160

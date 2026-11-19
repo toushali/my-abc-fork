@@ -1,7 +1,8 @@
-======== ABC command line "read_aiger test-designs/6s118.aig; fold; strash; purse -B 10000 -P 100000 -T 10 -V 3 -E 1"
+======== ABC command line "read_aiger test-designs/6s118.aig; fold; strash; purse -B 50 -P 25000 -T 10 -V 3 -E 1"
 Warning: The last 2 outputs are interpreted as constraints.
-c [PURSE-ARGS] V=3 E=1 k=0 output=-1 S=0 B=10000 P=100000
-c [PURSE-TOTAL] variant=3 total_sat_calls=0 undecided_sat_calls=0 time=31.403
+c [PURSE-ARGS] V=3 E=1 k=0 output=-1 S=0 B=50 P=25000
+c [PURSE-INIT] and=313873 threshold=10000 factor=11 CB=550 PB=275000
+c [PURSE-TOTAL] variant=3 total_sat_calls=0 undecided_sat_calls=0 time=13.662
 c [PURSE] po=0 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
 c [PURSE-SUMMARY] po=0 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
 c [PURSE] po=1 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
@@ -202,5 +203,5 @@ c [PURSE] po=98 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000
 c [PURSE-SUMMARY] po=98 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
 c [PURSE] po=99 result=PAUSED obligations=0 clauses=0 literals=0 avg_lits=0.0000 sat_calls=0 frames=0 conflicts=0 propagations=0 time=0.000000
 c [PURSE-SUMMARY] po=99 final=UNDECIDED slices=0 frames=0 sat_calls=0 conflicts=0 propagations=0 time=0.000000 rounds=?
-Properties:  All = 100. Proved = 0. Disproved = 0. Undecided = 100.   Time =    40.29 sec
-[RUNNER-RAM] max_rss_kb=3569556
+Properties:  All = 100. Proved = 0. Disproved = 0. Undecided = 100.   Time =    14.08 sec
+[RUNNER-RAM] max_rss_kb=3701348

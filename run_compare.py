@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare four PURSE modes with standard multi-output PDR.
+"""Compare standard PDR and eight PURSE configurations in old ABC.
 
 Run from the ABC directory:
     python3 run_compare.py
@@ -20,18 +20,25 @@ from pathlib import Path
 
 # -------- Change these settings as needed --------
 FOLDER = "test-designs"
-B = 10000        # PURSE conflict budget per slice
-P = 100000       # PURSE propagation budget per slice
-T = 10           # seconds for each solver run
+B = 50           # PURSE base conflict budget per slice
+P = 25000        # PURSE base propagation budget per slice
+T = 3600         # seconds for each solver run
 
 # All commands include: read_aiger; fold; strash
-# PDR uses -a to solve all properties and -v to print the manager's SAT call count.
+# Standard PDR uses -a to solve all properties and -v for SAT statistics.
+# No GipSAT or pdr2 variants are included.
+
+# Keep this order: it controls the ordering within every metric group in the CSV.
 CONFIGS = [
-    ("V2",        "purse", "-V 2"),
-    ("V3_E1",     "purse", "-V 3 -E 1"),
-    ("V3_E3",     "purse", "-V 3 -E 3"),
-    ("V3_E4_K2",  "purse", "-V 3 -E 4 -k 2"),
-    ("PDR",       "pdr",   "-a -v"),
+    ("PDR",          "pdr",   "-a -v"),
+    ("V1",           "purse", "-V 1"),
+    ("V2",           "purse", "-V 2"),
+    ("V3_E1",        "purse", "-V 3 -E 1"),
+    ("V3_E1_K2",     "purse", "-V 3 -E 1 -k 2"),
+    ("V3_E3",        "purse", "-V 3 -E 3"),
+    ("V3_E4_K2",     "purse", "-V 3 -E 4 -k 2"),
+    ("V3_E5",        "purse", "-V 3 -E 5"),
+    ("V3_E6_K2",     "purse", "-V 3 -E 6 -k 2"),
 ]
 
 # ABC prints this for PURSE and for 'pdr -a'.
@@ -120,6 +127,10 @@ def run_solver(design, name, label, tool, flags):
         "rounds": "",
         "time": "",          # ABC reported time (if available)
         "wall_time": f"{wall:.3f}",  # comparable wall time for every mode
+        # Throughput measure, not the mean individual proof completion latency.
+        # Includes time spent on disproved and undecided properties as well.
+        "avg_time_per_proved": (f"{wall / int(props[1]):.3f}"
+                                if props and int(props[1]) > 0 else ""),
         "peak_ram_mb": f"{int(ram.group(1)) / 1024:.2f}" if ram else "",
     }
 
@@ -140,7 +151,7 @@ def run_solver(design, name, label, tool, flags):
         calls = last(PDR_CALLS_RE, output)
         if calls:
             result["total_sat"] = calls.group(1)
-        # PDR has no PURSE per-property SAT/round reports.
+        # PDR modes have no PURSE per-property SAT/round reports.
         elapsed = last(ABC_TIME_RE, output)
         if elapsed:
             result["time"] = elapsed.group(1)
@@ -167,7 +178,7 @@ def main():
     columns = ["Design", "PO", "AND", "Proved", "Disproved", "Undecided"]
     for group in (
         "Status", "Total_SAT", "Undecided_SAT", "Proved_SAT",
-        "Rounds", "Time", "Wall_Time", "Peak_RAM_MB",
+        "Rounds", "Time", "Wall_Time", "Avg_Time_Per_Proved_s", "Peak_RAM_MB",
     ):
         columns.extend(f"{group}_{label}" for label in labels)
 
@@ -220,6 +231,7 @@ def main():
                 ("rounds", "Rounds"),
                 ("time", "Time"),
                 ("wall_time", "Wall_Time"),
+                ("avg_time_per_proved", "Avg_Time_Per_Proved_s"),
                 ("peak_ram_mb", "Peak_RAM_MB"),
             ):
                 for label in labels:

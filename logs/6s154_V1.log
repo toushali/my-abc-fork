@@ -1,0 +1,30 @@
+======== ABC command line "read_aiger test-designs/6s154.aig; fold; strash; purse -B 50 -P 25000 -T 10 -V 1"
+Warning: The network has no constraints.
+c [PURSE-ARGS] V=1 E=1 k=0 output=-1 S=0 B=50 P=25000
+c [PURSE-INIT] and=18183 threshold=10000 factor=8184 CB=409200 PB=204600000
+Invariant F[1] : 9 clauses with 5 flops (out of 128) (cex = 0, ave = 3.67)
+Verification of invariant with 9 clauses was successful.  Time =     0.00 sec
+c [PURSE-SCHED] round=1 po=0 result=SAFE frame=3 sat_calls_total=58 sat_calls_incr=58 conf_total=62 conf_incr=62 prop_total=44429 prop_incr=44429 over_conf=0 over_prop=0 mgr=0x64506cd1d4a0 time=0.037745
+c [PURSE] po=0 result=SAFE obligations=9 clauses=9 literals=33 avg_lits=3.6667 sat_calls=58 frames=1 conflicts=62 propagations=44429 time=0.037745
+Invariant F[1] : 22 clauses with 7 flops (out of 128) (cex = 0, ave = 5.14)
+Verification of invariant with 22 clauses was successful.  Time =     0.00 sec
+c [PURSE-SCHED] round=1 po=1 result=SAFE frame=3 sat_calls_total=174 sat_calls_incr=174 conf_total=224 conf_incr=224 prop_total=122054 prop_incr=122054 over_conf=0 over_prop=0 mgr=0x64506cc12420 time=0.044310
+c [PURSE] po=1 result=SAFE obligations=22 clauses=22 literals=105 avg_lits=4.7727 sat_calls=174 frames=1 conflicts=224 propagations=122054 time=0.044310
+Invariant F[1] : 64 clauses with 9 flops (out of 128) (cex = 0, ave = 7.20)
+Verification of invariant with 64 clauses was successful.  Time =     0.00 sec
+c [PURSE-SCHED] round=1 po=2 result=SAFE frame=3 sat_calls_total=645 sat_calls_incr=645 conf_total=1251 conf_incr=1251 prop_total=532346 prop_incr=532346 over_conf=0 over_prop=0 mgr=0x64506ca225b0 time=0.080814
+c [PURSE] po=2 result=SAFE obligations=64 clauses=64 literals=422 avg_lits=6.5938 sat_calls=645 frames=1 conflicts=1251 propagations=532346 time=0.080814
+Invariant F[1] : 250 clauses with 11 flops (out of 128) (cex = 0, ave = 9.14)
+Verification of invariant with 250 clauses was successful.  Time =     0.01 sec
+c [PURSE-SCHED] round=1 po=3 result=SAFE frame=3 sat_calls_total=3000 sat_calls_incr=3000 conf_total=4233 conf_incr=4233 prop_total=2264800 prop_incr=2264800 over_conf=0 over_prop=0 mgr=0x64506cfe70c0 time=0.227310
+c [PURSE] po=3 result=SAFE obligations=250 clauses=250 literals=2086 avg_lits=8.3440 sat_calls=3000 frames=1 conflicts=4233 propagations=2264800 time=0.227310
+Invariant F[1] : 922 clauses with 13 flops (out of 128) (cex = 0, ave = 11.04)
+Verification of invariant with 922 clauses was successful.  Time =     0.03 sec
+c [PURSE-SCHED] round=1 po=4 result=SAFE frame=3 sat_calls_total=12857 sat_calls_incr=12857 conf_total=17732 conf_incr=17732 prop_total=9249520 prop_incr=9249520 over_conf=0 over_prop=0 mgr=0x64506d196340 time=0.839329
+c [PURSE] po=4 result=SAFE obligations=922 clauses=922 literals=9278 avg_lits=10.0629 sat_calls=12857 frames=1 conflicts=17732 propagations=9249520 time=0.839329
+Invariant F[1] : 3558 clauses with 15 flops (out of 128) (cex = 0, ave = 13.07)
+Verification of invariant with 3558 clauses was successful.  Time =     0.24 sec
+c [PURSE-SCHED] round=1 po=5 result=SAFE frame=3 sat_calls_total=56879 sat_calls_incr=56879 conf_total=78898 conf_incr=78898 prop_total=38044810 prop_incr=38044810 over_conf=0 over_prop=0 mgr=0x64506d5042b0 time=4.316999
+c [PURSE] po=5 result=SAFE obligations=3558 clauses=3558 literals=42046 avg_lits=11.8173 sat_calls=56879 frames=1 conflicts=78898 propagations=38044810 time=4.316999
+Command terminated by signal 2
+[RUNNER-RAM] max_rss_kb=130588

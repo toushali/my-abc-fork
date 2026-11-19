@@ -2349,6 +2349,31 @@ static int Purse_Scaled( int nBase, double Scale )
     if ( v > 5.0e8 )  v = 5.0e8;   // only to stop int overflow, far above any real budget
     return (int)v;
 }
+
+/* E5/E6: Convert an efficiency share into a SAT budget */
+static int Purse_EffBudget(
+    int Base, double Scale, int nActive,
+    double Weight, double SumW )
+{
+    double Value;
+
+    if ( Base <= 0 )
+        return Base;
+
+    Value = (double)Purse_Scaled(Base, Scale)
+            * nActive * Weight / SumW;
+
+    // Zero means UNLIMITED in PDR, so never return 0
+    if ( Value < 1.0 )
+        return 1;
+
+    // Avoid integer overflow
+    if ( Value > 5.0e8 )
+        return 500000000;
+
+    return (int)Value;
+}
+
 // V3-N: budget-neutral proportional allocation
 // weight w = 0.5 (stalled), 1 (neutral), 2 (progressing)
 // CB_i = BaseCB * N * w_i / sum(w),   PB_i = BasePB * N * w_i / sum(w)
@@ -2359,7 +2384,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
     double SumW = 0;
     double dPhiPos, Gain;
     Purse_Ctx_t * c;
-    int k, r, nA = 0;
+    int k, r, nA = 0, fEffWeights;
 
     // 1. deltas of the last round and Eff (same as the old V3)
     for ( k = 0; k < nPos; k++ )
@@ -2381,8 +2406,38 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         pA[nA++] = c;
     }
 
-    // 2. split into three classes and give each property a weight
-    if ( nA > 0 && (pA[0]->Pars.nEffFormula == 3 || pA[0]->Pars.nEffFormula == 4) )      // -E 3: split by Score
+    
+    // E5 and E6 use direct efficiency-based weights
+    fEffWeights = nA > 0 && (pA[0]->Pars.nEffFormula == 5 || pA[0]->Pars.nEffFormula == 6);
+
+    
+    if ( fEffWeights )
+    {
+        double MaxEff = 0.0;
+
+        // Find maximum efficiency
+        for ( r = 0; r < nA; r++ )
+            if ( pA[r]->Eff > MaxEff )
+                MaxEff = pA[r]->Eff;
+
+        // Assign bounded continuous weights
+        for ( r = 0; r < nA; r++ )
+        {
+            if ( MaxEff > 0.0 )
+            {
+                double Eff = pA[r]->Eff > 0.0 ?
+                            pA[r]->Eff : 0.0;
+
+                pW[r] = 0.5 + 1.5 * Eff / MaxEff;
+            }
+            else
+                pW[r] = 1.0;
+
+            SumW += pW[r];
+        }
+    }
+
+    else if ( nA > 0 && (pA[0]->Pars.nEffFormula == 3 || pA[0]->Pars.nEffFormula == 4) )
     {
         Purse_ComputeScores( pCtx, nPos );
         qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpScore );   // lightest first
@@ -2430,8 +2485,25 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
         for ( r = 0; r < nA; r++ )
         {
             c = pA[r];
-            c->Pars.nConfBudget = (int)( (double)Purse_Scaled( c->nConfBase, Scale ) * nA * pW[r] / SumW );
-            c->Pars.nPropBudget = (int)( (double)Purse_Scaled( c->nPropBase, Scale ) * nA * pW[r] / SumW );
+            
+            if ( fEffWeights )
+            {
+                // E5/E6: direct efficiency-proportional allocation
+                c->Pars.nConfBudget =Purse_EffBudget(c->nConfBase, Scale, nA, pW[r], SumW);
+
+                c->Pars.nPropBudget =Purse_EffBudget(c->nPropBase, Scale, nA, pW[r], SumW);
+
+                if ( c->Pars.fVerbose )
+                    Abc_Print(1, "c [PURSE-EFF] round=%d po=%d eff=%.9g " "CB=%d PB=%d\n", iRound, c->iPo, c->Eff, c->Pars.nConfBudget, c->Pars.nPropBudget);
+            }
+            else
+            {
+                // Existing allocation for E1/E3/E4
+                c->Pars.nConfBudget = (int)((double)Purse_Scaled(c->nConfBase, Scale) * nA * pW[r] / SumW);
+
+                c->Pars.nPropBudget = (int)((double)Purse_Scaled(c->nPropBase, Scale) * nA * pW[r] / SumW);
+            }
+
         }
         ABC_FREE( pA );
         ABC_FREE( pW );
@@ -2466,8 +2538,10 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     // Consecutive rounds without a SAFE/UNSAFE result.
     int nNoVerdictRounds = 0;
 
-    // Only E4 enables the automatic fallback.
-    int fAutoFallback =(pPars->nOrderVar == 3 && pPars->nEffFormula == 4);
+    // Only E1, E4 and E6 enables the automatic fallback.
+    
+    int fAutoFallback =(pPars->nOrderVar == 3 && pPars->nFallbackRounds > 0 && (pPars->nEffFormula == 1 || pPars->nEffFormula == 4 || pPars->nEffFormula == 6));
+
     ABC_FREE( pAig->pSeqModel );
     //nCapConf = (long long)pPars->nConfBudget * PURSE_MAX_GROWTH;
     //nCapProp = (long long)pPars->nPropBudget * PURSE_MAX_GROWTH;
@@ -2590,11 +2664,7 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                         nActiveVariant = 2;
                         nNoVerdictRounds = 0;
 
-                        Abc_Print( 1,
-                            "c [PURSE-SWITCH] round=%d "
-                            "from=V3-E3 to=V2 "
-                            "reason=no_safe_or_unsafe\n",
-                            iRound );
+                        Abc_Print( 1, "c [PURSE-SWITCH] round=%d " "from=V3-E%d to=V2 " "reason=no_safe_or_unsafe\n", iRound, pPars->nEffFormula );
                     }
                 }
             }
@@ -2605,11 +2675,7 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                     nActiveVariant = 3;
                     nNoVerdictRounds = 0;
 
-                    Abc_Print( 1,
-                        "c [PURSE-SWITCH] round=%d "
-                        "from=V2 to=V3-E3 "
-                        "reason=property_solved count=%d\n",
-                        iRound, nSolved );
+                    Abc_Print( 1, "c [PURSE-SWITCH] round=%d " "from=V2 to=V3-E%d " "reason=property_solved count=%d\n", iRound, pPars->nEffFormula, nSolved );
                 }
             }
         }
@@ -2621,12 +2687,17 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
                 for ( k = 0; k < nPos; k++ )
                 if ( pCtx[k]->Status == PURSE_ST_ACTIVE )
                 {
-                    //if ( (long long)pCtx[k]->nConfBase * 2 <= nCapConf )
+                    /*//if ( (long long)pCtx[k]->nConfBase * 2 <= nCapConf )
                         pCtx[k]->nConfBase *= 2;
                     //if ( (long long)pCtx[k]->nPropBase * 2 <= nCapProp )
-                        pCtx[k]->nPropBase *= 2;
+                        pCtx[k]->nPropBase *= 2;*/
+                    pCtx[k]->nConfBase =(int)(((long long)pCtx[k]->nConfBase * 2 > 500000000LL)? 500000000LL : (long long)pCtx[k]->nConfBase * 2);
+
+                    pCtx[k]->nPropBase =(int)(((long long)pCtx[k]->nPropBase * 2 > 500000000LL)? 500000000LL : (long long)pCtx[k]->nPropBase * 2);
+
                     pCtx[k]->Pars.nConfBudget = pCtx[k]->nConfBase;
                     pCtx[k]->Pars.nPropBudget = pCtx[k]->nPropBase;
+
                 }
             }
             //if ( pPars->nOrderVar == 3 ) //V3
@@ -2639,7 +2710,7 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
 
             Purse_Reorder( pSeq, nPos, nActiveVariant );
 
-            Abc_Print(1, "c [PURSE-MODE] after_round=%d " "next_variant=V%d requested_E=%d effective_E=%d\n", iRound, nActiveVariant, pPars->nEffFormula, nActiveVariant == 3 ? (pPars->nEffFormula == 4 ? 3 : pPars->nEffFormula) : 0);
+            Abc_Print(1, "c [PURSE-MODE] after_round=%d " "next_variant=V%d requested_E=%d effective_E=%d\n", iRound, nActiveVariant, pPars->nEffFormula, nActiveVariant == 3 ? ((pPars->nEffFormula == 4 || pPars->nEffFormula == 6) ? pPars->nEffFormula - 1 : pPars->nEffFormula) : 0);
             
             for ( k = 0; k < nPos; k++ )
                 if ( pSeq[k]->Status == PURSE_ST_ACTIVE )
@@ -2717,6 +2788,33 @@ int Pdr_ManPurse( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     }
     ABC_FREE( pAig->pSeqModel );
     
+    // Initial budgets based on design AND-gate count
+    {
+        const int gates = 10000; // designer-chosen threshold
+        const long long maxBudget = 500000000LL;
+
+        int size = Aig_ManAndNum(pAig);
+
+        int factor = size < gates ? 1 :
+                     size < gates * 10 ? (size % gates) + 1 : 11;
+
+        long long cb = (long long)pPars->nConfBudget * factor;
+        long long pb = (long long)pPars->nPropBudget * factor;
+
+        if (pPars->nConfBudget > 0)
+            pPars->nConfBudget =
+                (int)(cb > maxBudget ? maxBudget : cb);
+
+        if (pPars->nPropBudget > 0)
+            pPars->nPropBudget =
+                (int)(pb > maxBudget ? maxBudget : pb);
+
+        Abc_Print(1,
+            "c [PURSE-INIT] and=%d threshold=%d factor=%d CB=%d PB=%d\n",
+            size, gates, factor,
+            pPars->nConfBudget, pPars->nPropBudget);
+    }
+
     clkSolve = Abc_Clock();
 
     // PURSE: slicing is on if any of -S, -B, -P is given

@@ -2,4 +2,25 @@
 Warning: The last 2 outputs are interpreted as constraints.
 VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
 Frame Clauses                                                     Max Queue Flops Cex      Time
-  1 : 0 200                                                               1   200      5.02 sec  CEX =   0
+  1 : 0 200                                                               1   200      2.33 sec  CEX =   0
+  2 : 0 78 161                                                            2   226      4.54 sec  CEX =   0
+  3 : 0 8 85 139                                                          0   226      4.69 sec  CEX =   0
+  4 : 0 36 121 42 238                                                    30   307      6.56 sec  CEX =   0
+  5 : 0 14 84 17 25 216                                                   3   308      6.72 sec  CEX =   0
+  6 : 0 21 93 28 52 46 284                                               23   347      7.93 sec  CEX =   0
+  7 : 0 11 80 4 7 28 37 248                                               3   347      8.15 sec  CEX =   0
+  8 : 0 18 87 12 15 31 38 28 284                                         22   366     10.00 sec  CEX =   0
+Reached timeout (10 seconds) in frame 8.
+Block =  234  Oblig =  1678  Clause =   726  Call =  6633 (sat=38.9%)  Cex =   0  Start =  16
+SAT solving =     4.08 sec ( 40.73 %)
+  unsat     =     0.03 sec (  0.32 %)
+  sat       =     4.05 sec ( 40.41 %)
+Generalize  =     4.17 sec ( 41.56 %)
+Push clause =     0.92 sec (  9.22 %)
+Ternary sim =     3.01 sec ( 30.01 %)
+Containment =     0.03 sec (  0.26 %)
+CNF compute =     0.07 sec (  0.69 %)
+Refinement  =     0.00 sec (  0.00 %)
+TOTAL       =    10.03 sec (100.00 %)
+Properties:  All = 100. Proved = 0. Disproved = 0. Undecided = 100.   Time =    10.18 sec
+[RUNNER-RAM] max_rss_kb=206208
