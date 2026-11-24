@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Run five ABC/PURSE variants on three dedicated Linux CPU cores.
+"""Run five ABC/PURSE variants on five distinct Linux physical CPU cores.
 
-Default assignment (each group's jobs are SEQUENTIAL on its own CPU):
-    CPU #1: V2, V3_E1
-    CPU #2: V3_E3, V3_E4_K2
-    CPU #3: PDR
+Default assignment (all five solver variants run concurrently):
+    CPU #1: V2
+    CPU #2: V3_E1
+    CPU #3: V3_E3
+    CPU #4: V3_E4_K2
+    CPU #5: PDR
 
-The three CPU groups run concurrently. Every mode has a separate results CSV
+Every mode has a separate results CSV
 and a separate log directory. Existing successful results are skipped on rerun.
 
 From the ABC directory:
-    python3 run_compare_3cores.py --list-cores
-    python3 run_compare_3cores.py --time 3600 --out runs_server54
-    python3 run_compare_3cores.py --cores 0,2,4 --time 3600 --out runs_server54
+    python3 run_compare_5cores.py --list-cores
+    python3 run_compare_5cores.py --time 3600 --out runs_server54
+    python3 run_compare_5cores.py --cores 16,18,20,22,24 --time 3600 --out runs_server54
 
 This script requires Linux CPU affinity, GNU /usr/bin/time, and ./abc.
-It does NOT pin two running solver processes to the same core at once.
+It pins one solver process per selected physical core.
 """
 
 import argparse
@@ -41,8 +43,8 @@ CONFIGS = {
     "PDR": ("pdr", "-a -v"),
 }
 
-# One process per group, pinned to one CPU. Within a group, modes run serially.
-GROUPS = (("V2", "V3_E1"), ("V3_E3", "V3_E4_K2"), ("PDR",))
+# One worker per physical core: each variant runs concurrently.
+GROUPS = (("V2",), ("V3_E1",), ("V3_E3",), ("V3_E4_K2",), ("PDR",))
 
 PROPS_RE = re.compile(
     r"Properties:\s*All\s*=\s*(\d+)\s*\.\s*"
@@ -102,9 +104,9 @@ def choose_cpus(requested):
         try:
             chosen = [int(x.strip()) for x in requested.split(",")]
         except ValueError:
-            raise SystemExit("--cores must be three comma-separated CPU IDs, e.g. 0,2,4")
-        if len(chosen) != 3 or len(set(chosen)) != 3:
-            raise SystemExit("Specify exactly three *distinct* CPU IDs with --cores.")
+            raise SystemExit("--cores must be five comma-separated CPU IDs, e.g. 16,18,20,22,24")
+        if len(chosen) != 5 or len(set(chosen)) != 5:
+            raise SystemExit("Specify exactly five *distinct* CPU IDs with --cores.")
         if any(cpu not in allowed for cpu in chosen):
             raise SystemExit(f"Requested CPU not permitted. Allowed: {allowed}")
     else:
@@ -117,19 +119,19 @@ def choose_cpus(requested):
             if key not in seen:
                 chosen.append(cpu)
                 seen.add(key)
-            if len(chosen) == 3:
+            if len(chosen) == 5:
                 break
-        if len(chosen) != 3:
+        if len(chosen) != 5:
             raise SystemExit(
-                "Need at least three distinct CPU cores available to this process. "
+                "Need at least five distinct CPU cores available to this process. "
                 f"Allowed logical CPU IDs: {allowed}"
             )
 
     known = [physical_key(c) for c in chosen]
-    if all(k is not None for k in known) and len(set(known)) != 3:
+    if all(k is not None for k in known) and len(set(known)) != 5:
         raise SystemExit(
             "Selected CPU IDs include hyperthread siblings of the same physical core. "
-            "Choose three different physical cores (see --list-cores)."
+            "Choose five different physical cores (see --list-cores)."
         )
     return chosen
 
@@ -314,9 +316,9 @@ def worker(core, modes, designs, meta, out, root, budget_b, budget_p, timeout_t,
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--list-cores", action="store_true", help="Show allowed logical CPUs and physical-core topology; do not run ABC")
-    parser.add_argument("--cores", help="Exactly three distinct physical-core CPU IDs, e.g. 0,2,4; selected automatically if omitted")
+    parser.add_argument("--cores", help="Exactly five distinct physical-core CPU IDs, e.g. 16,18,20,22,24; selected automatically if omitted")
     parser.add_argument("--folder", default="test-designs", help="Circuit directory relative to ABC root (default: test-designs)")
-    parser.add_argument("--out", default="runs_3cores", help="Output directory (default: runs_3cores)")
+    parser.add_argument("--out", default="runs_5cores", help="Output directory (default: runs_5cores)")
     parser.add_argument("--b", type=int, default=10000, help="PURSE conflict budget (default: 10000)")
     parser.add_argument("--p", type=int, default=100000, help="PURSE propagation budget (default: 100000)")
     parser.add_argument("--time", type=int, default=10, help="ABC timeout in seconds PER RUN (default: 10)")
@@ -351,7 +353,7 @@ def main():
             parser.error(f"Unsafe special character in design filename: {design!r}")
     cores = choose_cpus(args.cores)
     print_cores()
-    print("\nCPU assignments (each group sequential; groups concurrent):")
+    print("\nCPU assignments (one variant per distinct physical core; all concurrent):")
     for cpu, modes in zip(cores, GROUPS):
         print(f"  logical CPU {cpu}, physical={physical_key(cpu)}: {' -> '.join(modes)}")
     print(f"  ABC: {root / 'abc'}")
