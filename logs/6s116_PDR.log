@@ -1,39 +1,26 @@
-======== ABC command line "read_aiger test-designs/6s116.aig; fold; strash; pdr -T 10 -a -v"
+======== ABC command line "read_aiger test-designs/6s116.aig; fold; strash; pdr -T 3600 -a -v"
 Warning: The network has no constraints.
-VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 10. MonoCNF = no. SkipGen = no. SolveAll = yes.
+VarMax = 300. FrameMax = 10000. QueMax = 0. TimeMax = 3600. MonoCNF = no. SkipGen = no. SolveAll = yes.
 Frame Clauses                                                     Max Queue Flops Cex      Time
-  1 : 0 5                                                                 1     5      0.02 sec  CEX =   0
-  2 : 0 20 41                                                             7    62      0.04 sec  CEX =   0
-  3 : 0 8 9 34                                                            0    62      0.04 sec  CEX =   0
+  1 : 0 5                                                                 1     5      0.03 sec  CEX =   0
+  2 : 0 20 41                                                             7    62      0.05 sec  CEX =   0
+  3 : 0 8 9 34                                                            0    62      0.05 sec  CEX =   0
 Output  0 was asserted in frame  4 ( 4) (solved  1 out of 17 outputs).
-  4 : 0 39 19 4 71                                                       21   136      0.12 sec  CEX =   1
+  4 : 0 39 19 4 71                                                       21   136      0.14 sec  CEX =   1
 Output  8 was asserted in frame  5 ( 5) (solved  2 out of 17 outputs).
-  5 : 0 72 49 39 13 158                                                  30   268      0.25 sec  CEX =   2
-  6 : 0 18 23 19 20 11 176                                                1   268      0.26 sec  CEX =   2
+  5 : 0 72 49 39 13 158                                                  30   268      0.26 sec  CEX =   2
+  6 : 0 18 23 19 20 11 176                                                1   268      0.27 sec  CEX =   2
 Output  9 was asserted in frame  7 ( 7) (solved  3 out of 17 outputs).
-  7 : 0 22 25 22 21 30 58 248                                            21   326      0.37 sec  CEX =   3
+  7 : 0 22 25 22 21 30 58 248                                            21   326      0.39 sec  CEX =   3
 Output 10 was asserted in frame  8 ( 8) (solved  4 out of 17 outputs).
-  8 : 0 19 27 24 24 27 46 32 228                                         20   336      0.41 sec  CEX =   4
+  8 : 0 19 27 24 24 27 46 32 228                                         20   336      0.43 sec  CEX =   4
 Output 11 was asserted in frame  9 ( 9) (solved  5 out of 17 outputs).
-  9 : 0 15 23 22 27 41 62 81 105 432                                     25   386      0.88 sec  CEX =   5
+  9 : 0 15 23 22 27 41 62 81 105 432                                     25   386      0.90 sec  CEX =   5
 Output 12 was asserted in frame 10 (10) (solved  6 out of 17 outputs).
- 10 : 0 17 20 24 33 47 74 125 104 79 430                                 92   403      1.19 sec  CEX =   6
+ 10 : 0 17 20 24 33 47 74 125 104 79 430                                 92   403      1.22 sec  CEX =   6
 Output 13 was asserted in frame 11 (11) (solved  7 out of 17 outputs).
- 11 : 0 13 15 16 15 19 20 20 26 62 77 356                                14   403      1.23 sec  CEX =   7
+ 11 : 0 13 15 16 15 19 20 20 26 62 77 356                                14   403      1.26 sec  CEX =   7
 Output 14 was asserted in frame 12 (12) (solved  8 out of 17 outputs).
- 12 : 0 13 15 16 15 19 20 20 25 62 76 43 319                             13   403      1.26 sec  CEX =   8
- 13 : 0 15 24 39 74 113 161 190 252 342 536 750 920 2022                311   572     10.00 sec  CEX =   8
-Reached timeout (10 seconds) in frame 13.
-Block =   29  Oblig = 11205  Clause =  6066  Call = 69953 (sat=66.3%)  Cex =   0  Start = 225
-SAT solving =     5.29 sec ( 52.89 %)
-  unsat     =     0.34 sec (  3.43 %)
-  sat       =     4.95 sec ( 49.46 %)
-Generalize  =     7.02 sec ( 70.14 %)
-Push clause =     0.16 sec (  1.58 %)
-Ternary sim =     1.97 sec ( 19.72 %)
-Containment =     1.14 sec ( 11.38 %)
-CNF compute =     0.36 sec (  3.62 %)
-Refinement  =     0.00 sec (  0.00 %)
-TOTAL       =    10.01 sec (100.00 %)
-Properties:  All = 17. Proved = 0. Disproved = 8. Undecided = 9.   Time =    10.02 sec
-[RUNNER-RAM] max_rss_kb=66048
+ 12 : 0 13 15 16 15 19 20 20 25 62 76 43 319                             13   403      1.29 sec  CEX =   8
+Command terminated by signal 2
+[RUNNER-RAM] max_rss_kb=64896
