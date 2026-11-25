@@ -2199,6 +2199,47 @@ static int Purse_CmpKey( const void * a, const void * b )
     return x->iPo - y->iPo;            // tie: keep the original property order
 }
 
+/* Fixed-seed random order, reproducible and independent of active-set size.
+   E3/E5 use the same permutation for the same design and scheduling round. */
+static unsigned int Purse_AblaNextRand( unsigned int * pState )
+{
+    unsigned int x = *pState;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    *pState = x;
+    return x;
+}
+
+static void Purse_AblaShuffle( Purse_Ctx_t ** pSeq, Purse_Ctx_t ** pCtx,
+                               int nPos, unsigned int Seed, int iRound )
+{
+    Purse_Ctx_t ** pTmp = ABC_ALLOC( Purse_Ctx_t *, nPos );
+    unsigned int State = Seed ^ ((unsigned int)iRound * 0x9e3779b9U);
+    int k, nActive = 0;
+    if ( State == 0 ) State = 0x85ebca6bU;
+    /* Shuffle the complete original property set (not only active goals).
+       This makes the random priority of any surviving goal independent
+       of which properties have already been concluded. */
+    for ( k = 0; k < nPos; k++ )
+        pTmp[k] = pCtx[k];
+    for ( k = nPos - 1; k > 0; k-- )
+    {
+        unsigned int j = Purse_AblaNextRand( &State ) % (unsigned int)(k + 1);
+        Purse_Ctx_t * t = pTmp[k];
+        pTmp[k] = pTmp[j];
+        pTmp[j] = t;
+    }
+    /* Extract active properties in shuffled order. */
+    for ( k = 0; k < nPos; k++ )
+        if ( pTmp[k]->Status == PURSE_ST_ACTIVE )
+            pSeq[nActive++] = pTmp[k];
+    for ( k = 0; k < nPos; k++ )
+        if ( pTmp[k]->Status != PURSE_ST_ACTIVE )
+            pSeq[nActive++] = pTmp[k];
+    ABC_FREE( pTmp );
+}
+
 static void Purse_Reorder( Purse_Ctx_t ** pSeq, int nPos, int Variant )
 {
     double mTC = 0, mPhi = 0, mPO = 0, mTL = 0, mAL = 0, Score, Six, NE;
@@ -2382,7 +2423,15 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
     }
 
     // 2. split into three classes and give each property a weight
-    if ( nA > 0 && (pA[0]->Pars.nEffFormula == 3 || pA[0]->Pars.nEffFormula == 4) )      // -E 3: split by Score
+    if ( nA > 0 && pA[0]->Pars.nEffFormula == 5 ) // Ablation 2: uniform weights
+    {
+        for ( r = 0; r < nA; r++ )
+        {
+            pW[r] = 1.0;
+            SumW += pW[r];
+        }
+    }
+    else if ( nA > 0 && pA[0]->Pars.nEffFormula == 4 ) // legacy E4: score weights
     {
         Purse_ComputeScores( pCtx, nPos );
         qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpScore );   // lightest first
@@ -2395,7 +2444,7 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
             SumW += pW[r];
         }
     }
-    else                                                // -E 1 or 2: split by Eff (unchanged)
+    else                                                // -E 1, 2 or 3: split by Eff
     {
         qsort( pA, nA, sizeof(Purse_Ctx_t *), Purse_CmpEff );
         for ( r = 0; r < nA; r++ )
@@ -2432,6 +2481,11 @@ static void Purse_AllocateN( Purse_Ctx_t ** pCtx, int nPos, int iRound )
             c = pA[r];
             c->Pars.nConfBudget = (int)( (double)Purse_Scaled( c->nConfBase, Scale ) * nA * pW[r] / SumW );
             c->Pars.nPropBudget = (int)( (double)Purse_Scaled( c->nPropBase, Scale ) * nA * pW[r] / SumW );
+            if ( c->Pars.nEffFormula == 3 || c->Pars.nEffFormula == 5 )
+                Abc_Print( 1, "c [PURSE-ABL-ALLOC] E=%d round=%d po=%d weight=%.2f "
+                              "eff=%.8g conf=%d prop=%d\n",
+                           c->Pars.nEffFormula, iRound, c->iPo, pW[r], c->Eff,
+                           c->Pars.nConfBudget, c->Pars.nPropBudget );
         }
         ABC_FREE( pA );
         ABC_FREE( pW );
@@ -2462,6 +2516,10 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
     int i, k, iRound, nRun = 0, nActive, fTimeOut = 0, nProved = 0, nFailed = 0, nUndec = 0, nSolved;
     // Dynamic scheduler mode (2 = V2, 3 = V3).
     int nActiveVariant = pPars->nOrderVar;
+    int fAblaRandom = (pPars->nOrderVar == 3 &&
+                       (pPars->nEffFormula == 3 || pPars->nEffFormula == 5));
+    unsigned int AblaSeed = (unsigned int)pPars->nRandomSeed;
+    if ( AblaSeed == 0 ) AblaSeed = 0x9e3779b9U;
 
     // Consecutive rounds without a SAFE/UNSAFE result.
     int nNoVerdictRounds = 0;
@@ -2485,6 +2543,13 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
        pCtx[i]->dPO = 0;  
        pCtx[i]->dPhi = 0;
        pCtx[i]->fSolved = 0;
+    }
+
+    if ( fAblaRandom )
+    {
+        Abc_Print( 1, "c [PURSE-ABLATION] E=%d random_order=1 weighted=%d seed=%u\n",
+                   pPars->nEffFormula, pPars->nEffFormula == 3, AblaSeed );
+        Purse_AblaShuffle( pSeq, pCtx, nPos, AblaSeed, 1 );
     }
 
     for ( iRound = 1; iRound <= nRounds && !fTimeOut; iRound++ )
@@ -2637,7 +2702,10 @@ int Pdr_ManPurseSched( Aig_Man_t * pAig, Pdr_Par_t * pPars )
             if ( nActiveVariant == 3 )
                 Purse_AllocateN( pCtx, nPos, iRound );
 
-            Purse_Reorder( pSeq, nPos, nActiveVariant );
+            if ( fAblaRandom )
+                Purse_AblaShuffle( pSeq, pCtx, nPos, AblaSeed, iRound + 1 );
+            else
+                Purse_Reorder( pSeq, nPos, nActiveVariant );
 
             Abc_Print(1, "c [PURSE-MODE] after_round=%d " "next_variant=V%d requested_E=%d effective_E=%d\n", iRound, nActiveVariant, pPars->nEffFormula, nActiveVariant == 3 ? (pPars->nEffFormula == 4 ? 3 : pPars->nEffFormula) : 0);
             

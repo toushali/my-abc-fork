@@ -33805,12 +33805,12 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'E':
             if ( globalUtilOptind >= argc )
             {
-                Abc_Print( -1, "Command line switch \"-E\" should be followed by 1, 2, 3 or 4.\n" );
+                Abc_Print( -1, "Command line switch \"-E\" should be followed by 1, 2, 3, 4 or 5.\n" );
                 goto usage;
             }
             pPars->nEffFormula = atoi( argv[globalUtilOptind] );
             globalUtilOptind++;
-            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 4 )
+            if ( pPars->nEffFormula < 1 || pPars->nEffFormula > 5 )
                 goto usage;
             break;
         case 'a':
@@ -33924,6 +33924,12 @@ int Abc_CommandPurse( Abc_Frame_t * pAbc, int argc, char ** argv )
         }
     }
 
+    /* E3/E5 are ablation-only modes of V3 in this branch. */
+    if ( (pPars->nEffFormula == 3 || pPars->nEffFormula == 5) && pPars->nOrderVar != 3 )
+    {
+        Abc_Print( -1, "Ablation -E 3/-E 5 requires -V 3.\n" );
+        goto usage;
+    }
     /* PURSE V3 E4 fallback validation */
     Abc_Print(1, "c [PURSE-ARGS] V=%d E=%d k=%d " "output=%d S=%d B=%lld P=%lld\n", pPars->nOrderVar, pPars->nEffFormula, pPars->nFallbackRounds, pPars->iOutput, pPars->nSliceFrames, (long long)pPars->nConfBudget, (long long)pPars->nPropBudget);
     if ( pPars->nEffFormula == 4 )
@@ -34014,7 +34020,9 @@ usage:
     Abc_Print( -2, "\t-B num : SAT conflicts per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nConfBudget );
     Abc_Print( -2, "\t-P num : SAT propagations per slice; slice pauses at the next frame boundary (0 = no limit) [default = %d]\n", (int)pPars->nPropBudget );
     Abc_Print( -2, "\t-O num : zero-based index of the only output to solve (-1 = all) [default = %d]\n", pPars->iOutput );
-    Abc_Print( -2, "\t-E num : progress formula for V3-N, 1 = dF/(dTC+eps), 2 = dF/(dTC+L*dPO+eps), 3 = 5-metric score [default = %d]\n" "4 = score with V2 fallback [default = %d]\n", pPars->nEffFormula );
+    Abc_Print( -2, "\t-E num : V3 allocation: 1 = progress-weighted, 2 = alternative efficiency\n"
+                       "\t         3 = Abl1 random ordering + progress-weighted\n"
+                       "\t         4 = score + V2 fallback, 5 = Abl2 random ordering + uniform weights\n" );
     Abc_Print( -2, "\t-a     : toggle solving all outputs even if one of them is SAT [default = %s]\n",      pPars->fSolveAll? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle storing CEXes when solving all outputs [default = %s]\n",              pPars->fStoreCex? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using more effort in generalization [default = %s]\n",                 pPars->fTwoRounds? "yes": "no" );
